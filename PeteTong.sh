@@ -1,6 +1,4 @@
 #!/bin/bash
-#  Template started Sunday 5th January 2020
-<<<<<<< HEAD
 #  NAME
 #	PeteTong.sh - however this can be changed to meet user
 #	specific needs!
@@ -50,9 +48,12 @@ CONNAME=
 ORIGINALCON=
 
 ##### VG & LV #####
-VGNAME=
-PESIZE=
-LVNAMEONE=
+EXISTINGVGNAME="existingvg01"
+EXISTINGPESIZE="8M"
+EXISTINGLVNAME="existinglv01"
+EXISTINGFSTYPE="ext4"
+EXISTINGMOUNTPOINT="/mountpoint
+LVNAMEONE='lv1'
 LVSIZEONEMIN=
 LVSIZEONEMAX=
 LVMMNTONE=
@@ -80,14 +81,17 @@ SUUID=
 CHAGEUSER1=
 CHAGEUSER2=
 PASSWDEXP="Password expires"
+FINDUSER=
+FINDFILES=
+
 
 ##### Timezone #####
 TIMEZONE="America/"
 TZSERVER="server classroom\.example\.com.*iburst"
 
 ##### Yum #####
-YUMREPO1=
-YUMREPO2=
+YUMREPO1="http://content.example.com/rhel8.0/x86_64/dvd/BaseOS"
+YUMREPO2="http://content.example.com/rhel8.0/x86_64/dvd/AppStream"
 
 ##### Files and Directories #####
 HOMEDIRUSER=
@@ -103,6 +107,7 @@ FACLDIRONE=
 FACLDIRTWO=
 FACLUSERONE=
 FACLUSERTWO=
+GREPFILE=
 
 ##### Cron #####
 CRONUSER=
@@ -110,10 +115,112 @@ CHKCRONNUMS=
 CHKCRONDAYS=
 
 
+##### Apache #####
+DOCROOT=
+
+
 ###################################################################
 ###################################################################
-################# Functions section ###############################
+################# Setup functions section #########################
 ###################################################################
 ###################################################################
-=======
->>>>>>> 0c6b0b034f1e205c900b771835f65c57c6e0b08c
+
+#Setup functions for servera:
+
+function setup_servera {
+#Install Apache
+ssh root@servera "yum install httpd -y;
+systemctl enable httpd --now;
+#Create VirtualHost for port 84 with DocumentRoot outside of /var/www/html
+cat > /etc/httpd/conf.d/servera.conf << EOF
+listen 84
+<VirtualHost *:84>
+	ServerName	localhost
+	DocumentRoot	$DOCROOT
+	CustomLog	logs/localhost.access.log combined
+	ErrorLog	logs/localhost.error.log
+</VirtualHost>
+EOF
+
+#Delete Repositories
+rm -f /etc/yum.repos.d/*.repo;
+#Create $FINDUSER
+useradd $FINDUSER;
+#Create files to be found $FINDFILES
+touch $FINDFILES;
+#Change Ownership of those files to the $FINDOWNER
+chown $FINDUSER:$FINDUSER $FINDFILES;
+#Create $GREPFILE 
+wget github.com/OpenCloudJedi/${GREPFILE}
+#Remove networking
+nmcli con delete "Wired Connection 1";"
+}
+
+
+
+#Setup functions for serverb:
+
+function setup_serverb {
+#Lockout users
+ssh root@serverb "
+head -c 32 /dev/urandom | passwd --stdin root;
+head -c 32 /dev/urandom | passwd --stdin student;
+#Create an existing swap partition
+#Create existing LVM partitions
+touch /root/part;
+echo 'fdisk -u  /dev/vdb <<EOF' >> /root/part;
+echo 'n' >> /root/part;
+echo 'p' >> /root/part;
+echo '1' >> /root/part;
+echo '' >> /root/part;
+echo '+256M' >> /root/part;
+echo 't' >> /root/part;
+echo '82' >> /root/part;
+echo 'n' >> /root/part;
+echo 'p' >> /root/part;
+echo '2' >> /root/part;
+echo '' >> /root/part;
+echo '+256M' >> /root/part;
+echo 't' >> /root/part;
+echo '2' >> /root/part;
+echo '8e' >> /root/part;
+echo 'n' >> /root/part;
+echo 'p' >> /root/part;
+echo '3' >> /root/part;
+echo '' >> /root/part;
+echo '+1500M' >> /root/part;
+echo 't' >> /root/part;
+echo '3' >> /root/part;
+echo '8e' >> /root/part;
+echo 'w' >> /root/part;
+echo 'EOF' >> /root/part;
+chmod +x /root/part;
+./part;
+#Create existing swap
+mkswap /dev/vdb1;
+#Create VG and set PE size
+vgcreate -s $EXISTINGPESIZE $EXISTINGVGNAME;
+#Create LV
+lvcreate -n $EXISTINGLVNAME -L $EXISTINGLVSIZE $EXISTINGVGNAME;
+#Create FileSystem
+mkfs -t $EXISTINGFSTYPE
+#Add to /etc/fstab
+echo '/dev/$EXISTINGVGNAME/$EXISTINGLVNAME  $EXISTINGMOUNTPOINT    $EXISTINGFSTYPE   defaults 0 0' >> /etc/fstab;
+echo '/dev/vdb1  swap	swap   defaults 0 0' >> /etc/fstab;
+#Change performance profile from default to anything else...
+tuned-adm profile throughput-performance;
+#Install autofs, but do not enable
+yum install autofs;
+#Extend grub timeout
+#Fix grub
+sed -i s/TIMEOUT=1/TIMEOUT=20/g /etc/default/grub ;
+grub2-mkconfig -o /boot/grub2/grub.cfg;"
+}
+
+
+
+###################################################################
+###################################################################
+################# Grading functions section #########################
+###################################################################
+###################################################################
