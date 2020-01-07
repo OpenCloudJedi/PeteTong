@@ -11,8 +11,8 @@
 #	be managed to suit the educator/student need and to be able to
 #	utilize themes.
 #
-#	Currently the script has been configured and tested in the RHEL 
-#	classroom environment and should run there properly. This may be 
+#	Currently the script has been configured and tested in the RHEL
+#	classroom environment and should run there properly. This may be
 #	adapted adapted to work in other environments in later versions.
 #
 #  SETUP
@@ -45,15 +45,15 @@ SETUPLABEL="/tmp/.setuplabel"
 
 ##### Network Settings #####
 CONNAME=
-ORIGINALCON=
+ORIGINALCON="Wired Connection 1"
 
 ##### VG & LV #####
 EXISTINGVGNAME="existingvg01"
 EXISTINGPESIZE="8M"
 EXISTINGLVNAME="existinglv01"
 EXISTINGFSTYPE="ext4"
-EXISTINGMOUNTPOINT="/mountpoint
-LVNAMEONE='lv1'
+EXISTINGMOUNTPOINT="/mountpoint"
+LVNAMEONE="lv1"
 LVSIZEONEMIN=
 LVSIZEONEMAX=
 LVMMNTONE=
@@ -150,7 +150,7 @@ useradd $FINDUSER;
 touch $FINDFILES;
 #Change Ownership of those files to the $FINDOWNER
 chown $FINDUSER:$FINDUSER $FINDFILES;
-#Create $GREPFILE 
+#Create $GREPFILE
 wget github.com/OpenCloudJedi/${GREPFILE}
 #Remove networking
 nmcli con delete "Wired Connection 1";"
@@ -312,7 +312,7 @@ case $1 in setup | --setup )
 		lab_grade
 	;;
 	help | --help )
-		help
+			printf "Proper usage is ./scriptname setup or ./scriptname grade depending on if you are setting things up or grading. \n"
 	;;
 	* )
 		help
