@@ -1,5 +1,6 @@
 #!/bin/bash
 #  Template started Sunday 5th January 2020
+<<<<<<< HEAD
 #  NAME
 #	PeteTong.sh - however this can be changed to meet user
 #	specific needs!
@@ -114,3 +115,5 @@ CHKCRONDAYS=
 ################# Functions section ###############################
 ###################################################################
 ###################################################################
+=======
+>>>>>>> 0c6b0b034f1e205c900b771835f65c57c6e0b08c
