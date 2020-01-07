@@ -127,7 +127,7 @@ DOCROOT=
 
 #Setup functions for servera:
 
-function setup_servera {
+function setup_servera() {
 #Install Apache
 ssh root@servera "yum install httpd -y;
 systemctl enable httpd --now;
@@ -160,7 +160,7 @@ nmcli con delete "Wired Connection 1";"
 
 #Setup functions for serverb:
 
-function setup_serverb {
+function setup_serverb() {
 #Lockout users
 ssh root@serverb "
 head -c 32 /dev/urandom | passwd --stdin root;
@@ -221,6 +221,100 @@ grub2-mkconfig -o /boot/grub2/grub.cfg;"
 
 ###################################################################
 ###################################################################
-################# Grading functions section #########################
+################# Grading functions section #######################
 ###################################################################
 ###################################################################
+
+#Grade functions needed for servera
+
+#function grade_network_details
+#function grade_hostname
+#function grade_autoconnect
+#function grade_apache
+#function grade_repos
+#function grade_script
+#function grade_users
+#function grade_groups
+#function grade_passwords
+#function grade_shared_directory
+#function grade_file_permissions
+#function grade_grep
+#function grade_find
+
+
+#Grade functions needed for servera
+
+#function grade_rootpw
+#function grade_lvresize
+#function grade_lvm1
+#function grade_lvm2
+#function grade_swap
+#function grade_performance_profile
+#function grade_vdo
+#function grade_nfs
+
+
+###################################################################
+###################################################################
+################# Calling functions section #######################
+###################################################################
+###################################################################
+
+function setup_script() {
+	setup_servera
+	setup_serverb
+}
+
+function lab_grade() {
+#Grade functions needed for servera
+
+# grade_network_details
+#grade_hostname
+#grade_autoconnect
+#grade_apache
+#grade_repos
+#grade_script
+#grade_users
+#grade_groups
+#grade_passwords
+#grade_shared_directory
+#grade_file_permissions
+#grade_grep
+#grade_find
+
+
+#Grade functions needed for servera
+
+#grade_rootpw
+#grade_lvresize
+#grade_lvm1
+#grade_lvm2
+#grade_swap
+#grade_performance_profile
+#grade_vdo
+#grade_nfs
+}
+
+# case statement that calls all functions
+
+case $1 in setup | --setup )
+		#  Check if the file label has been created to prevent errors when running setup
+		if [ -e "$SETUPLABEL" ]
+		then
+			printf "Setup has already been run on this system.\n"
+		else
+			setup_script
+		fi
+		sleep 4
+		reboot
+	;;
+	grade | --grade )
+		lab_grade
+	;;
+	help | --help )
+		help
+	;;
+	* )
+		help
+	;;
+esac
