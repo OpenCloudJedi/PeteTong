@@ -70,7 +70,7 @@ SETMNT=
 
 ##### Users and Groups #####
 GROUPNAME=
-ARRAYUSERS=( user1 user2 user3 user4 )
+ARRAYUSERS=( user1 user2 user3 user4 ) #  may end up changing from array
 NEWPASS=
 ROOTPASS=
 #  If using a special user for facls or etc its details can be set here
@@ -116,7 +116,7 @@ CHKCRONDAYS=
 
 
 ##### Apache #####
-DOCROOT=
+DOCROOT="/test"
 
 
 ###################################################################
@@ -145,18 +145,20 @@ EOF
 #Delete Repositories
 rm -f /etc/yum.repos.d/*.repo;
 #Create $FINDUSER
+echo "creating user: ${FINDUSER}";
 useradd $FINDUSER;
 #Create files to be found $FINDFILES
+echo "creating files: ${FINDFILES}"
 touch $FINDFILES;
 #Change Ownership of those files to the $FINDOWNER
+echo "changing ownership to "${FINDUSER}" for "${FINDFILES}"";
 chown $FINDUSER:$FINDUSER $FINDFILES;
 #Create $GREPFILE
-wget github.com/OpenCloudJedi/${GREPFILE}
+#wget github.com/OpenCloudJedi/${GREPFILE}
 #Remove networking
+echo "removing network connection"
 nmcli con delete "Wired Connection 1";"
 }
-
-
 
 #Setup functions for serverb:
 
@@ -165,37 +167,30 @@ function setup_serverb() {
 ssh root@serverb "
 head -c 32 /dev/urandom | passwd --stdin root;
 head -c 32 /dev/urandom | passwd --stdin student;
-#Create an existing swap partition
-#Create existing LVM partitions
-touch /root/part;
-echo 'fdisk -u  /dev/vdb <<EOF' >> /root/part;
-echo 'n' >> /root/part;
-echo 'p' >> /root/part;
-echo '1' >> /root/part;
-echo '' >> /root/part;
-echo '+256M' >> /root/part;
-echo 't' >> /root/part;
-echo '82' >> /root/part;
-echo 'n' >> /root/part;
-echo 'p' >> /root/part;
-echo '2' >> /root/part;
-echo '' >> /root/part;
-echo '+256M' >> /root/part;
-echo 't' >> /root/part;
-echo '2' >> /root/part;
-echo '8e' >> /root/part;
-echo 'n' >> /root/part;
-echo 'p' >> /root/part;
-echo '3' >> /root/part;
-echo '' >> /root/part;
-echo '+1500M' >> /root/part;
-echo 't' >> /root/part;
-echo '3' >> /root/part;
-echo '8e' >> /root/part;
-echo 'w' >> /root/part;
-echo 'EOF' >> /root/part;
-chmod +x /root/part;
-./part;
+cat <<- FDISKCMD | fdisk /dev/vdb &>/dev/null
+	n
+	p
+	1
+	+256M
+	t
+	1
+	82
+	n
+	p
+	2
+	+256M
+	t
+	2
+	8e
+	n
+	p
+	3
+	+256M
+	t
+	3
+	8e
+	w
+	FDISKCMD
 #Create existing swap
 mkswap /dev/vdb1;
 #Create VG and set PE size
@@ -203,10 +198,10 @@ vgcreate -s $EXISTINGPESIZE $EXISTINGVGNAME;
 #Create LV
 lvcreate -n $EXISTINGLVNAME -L $EXISTINGLVSIZE $EXISTINGVGNAME;
 #Create FileSystem
-mkfs -t $EXISTINGFSTYPE
+mkfs -t $EXISTINGFSTYPE;
 #Add to /etc/fstab
-echo '/dev/$EXISTINGVGNAME/$EXISTINGLVNAME  $EXISTINGMOUNTPOINT    $EXISTINGFSTYPE   defaults 0 0' >> /etc/fstab;
-echo '/dev/vdb1  swap	swap   defaults 0 0' >> /etc/fstab;
+echo '/dev/$EXISTINGVGNAME/$EXISTINGLVNAME $EXISTINGMOUNTPOINT $EXISTINGFSTYPE defaults 0 0' >> /etc/fstab;
+echo '/dev/vdb1 swap swap defaults 0 0' >> /etc/fstab;
 #Change performance profile from default to anything else...
 tuned-adm profile throughput-performance;
 #Install autofs, but do not enable
@@ -217,100 +212,35 @@ sed -i s/TIMEOUT=1/TIMEOUT=20/g /etc/default/grub ;
 grub2-mkconfig -o /boot/grub2/grub.cfg;"
 }
 
-
-
-###################################################################
-###################################################################
-################# Grading functions section #######################
-###################################################################
-###################################################################
-
-#Grade functions needed for servera
-
-#function grade_network_details
-#function grade_hostname
-#function grade_autoconnect
-#function grade_apache
-#function grade_repos
-#function grade_script
-#function grade_users
-#function grade_groups
-#function grade_passwords
-#function grade_shared_directory
-#function grade_file_permissions
-#function grade_grep
-#function grade_find
-
-
-#Grade functions needed for servera
-
-#function grade_rootpw
-#function grade_lvresize
-#function grade_lvm1
-#function grade_lvm2
-#function grade_swap
-#function grade_performance_profile
-#function grade_vdo
-#function grade_nfs
-
-
-###################################################################
-###################################################################
-################# Calling functions section #######################
-###################################################################
-###################################################################
-
 function setup_script() {
 	setup_servera
-	setup_serverb
+#	setup_serverb
 }
 
-function lab_grade() {
-#Grade functions needed for servera
-
-# grade_network_details
-#grade_hostname
-#grade_autoconnect
-#grade_apache
-#grade_repos
-#grade_script
-#grade_users
-#grade_groups
-#grade_passwords
-#grade_shared_directory
-#grade_file_permissions
-#grade_grep
-#grade_find
-
-
-#Grade functions needed for servera
-
-#grade_rootpw
-#grade_lvresize
-#grade_lvm1
-#grade_lvm2
-#grade_swap
-#grade_performance_profile
-#grade_vdo
-#grade_nfs
-}
+if [[ $# -eq 0 ]]
+then
+	printf "No arguments were passed to the script.\n"
+	exit 0
+	#  This should be replaced with a help function
+fi
 
 # case statement that calls all functions
 
-case $1 in setup | --setup )
-		#  Check if the file label has been created to prevent errors when running setup
-		if [ -e "$SETUPLABEL" ]
-		then
-			printf "Setup has already been run on this system.\n"
-		else
+case $1 in
+	setup | --setup )
+	#  Check if the file label has been created to prevent errors when running setup
+		#if [ -e "$SETUPLABEL" ]
+		#then
+	#		printf "Setup has already been run on this system.\n"
+	#	else
 			setup_script
-		fi
-		sleep 4
-		reboot
+	#	fi
+  	#sleep 4
+		#reboot
 	;;
-	grade | --grade )
-		lab_grade
-	;;
+	#grade | --grade )
+	#	lab_grade
+	#;;
 	help | --help )
 			printf "Proper usage is ./scriptname setup or ./scriptname grade depending on if you are setting things up or grading. \n"
 	;;
@@ -318,3 +248,35 @@ case $1 in setup | --setup )
 		help
 	;;
 esac
+
+
+######### Temp bin
+#touch /root/part;
+#echo 'fdisk -u  /dev/vdb <<EOF' >> /root/part;
+#echo 'n' >> /root/part;
+#echo 'p' >> /root/part;
+#echo '1' >> /root/part;
+#echo '' >> /root/part;
+#echo '+256M' >> /root/part;
+#echo 't' >> /root/part;
+#echo '82' >> /root/part;
+#echo 'n' >> /root/part;
+#echo 'p' >> /root/part;
+#echo '2' >> /root/part;
+#echo '' >> /root/part;
+#echo '+256M' >> /root/part;
+#echo 't' >> /root/part;
+#echo '2' >> /root/part;
+#echo '8e' >> /root/part;
+#echo 'n' >> /root/part;
+#echo 'p' >> /root/part;
+#echo '3' >> /root/part;
+#echo '' >> /root/part;
+#echo '+1500M' >> /root/part;
+#echo 't' >> /root/part;
+#echo '3' >> /root/part;
+#echo '8e' >> /root/part;
+#echo 'w' >> /root/part;
+#echo 'EOF' >> /root/part;
+#chmod +x /root/part;
+#./part;
