@@ -51,6 +51,7 @@ ORIGINALCON="Wired\ Connection\ 1"
 EXISTINGVGNAME="existingvg01"
 EXISTINGPESIZE="8M"
 EXISTINGLVNAME="existinglv01"
+EXISTINGLVSIZE="1G"
 EXISTINGFSTYPE="ext4"
 EXISTINGMOUNTPOINT="/mountpoint"
 LVNAMEONE="lv1"
@@ -172,6 +173,7 @@ cat <<- FDISKCMD | fdisk /dev/vdb &>/dev/null
 	n
 	p
 	1
+
 	+256M
 	t
 	1
@@ -179,6 +181,7 @@ cat <<- FDISKCMD | fdisk /dev/vdb &>/dev/null
 	n
 	p
 	2
+
 	+256M
 	t
 	2
@@ -186,12 +189,14 @@ cat <<- FDISKCMD | fdisk /dev/vdb &>/dev/null
 	n
 	p
 	3
+
 	+256M
 	t
 	3
 	8e
 	w
 	FDISKCMD
+partprobe;
 #Create existing swap
 mkswap /dev/vdb1;
 #Create VG and set PE size
@@ -206,7 +211,7 @@ echo '/dev/vdb1 swap swap defaults 0 0' >> /etc/fstab;
 #Change performance profile from default to anything else...
 tuned-adm profile throughput-performance;
 #Install autofs, but do not enable
-yum install autofs;
+yum install autofs -y;
 #Extend grub timeout
 #Fix grub
 sed -i s/TIMEOUT=1/TIMEOUT=20/g /etc/default/grub ;
