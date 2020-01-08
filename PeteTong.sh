@@ -51,7 +51,7 @@ ORIGINALCON="Wired\ Connection\ 1"
 EXISTINGVGNAME="existingvg01"
 EXISTINGPESIZE="8M"
 EXISTINGLVNAME="existinglv01"
-EXISTINGLVSIZE="1G"
+EXISTINGLVSIZE="400M"
 EXISTINGFSTYPE="ext4"
 EXISTINGMOUNTPOINT="/mountpoint"
 LVNAMEONE="lv1"
@@ -59,15 +59,15 @@ LVSIZEONEMIN=
 LVSIZEONEMAX=
 LVMMNTONE=
 LVONETYPE=
-LVNAMETWO=
+LVNAMETWO="lv2"
 LVSIZETWOMIN=
 LVSIZETWOMAX=
 LVMMNTTWO=
 LVTWOTYPE=
 LVRESIZE=
-SETVGNAME=
-SETLVNAME=
-SETMNT=
+SWAPPART1SIZE="+256M"
+LVPART2SIZE="+1G"
+LVPART3SIZE="+512M"
 
 ##### Users and Groups #####
 GROUPNAME=
@@ -174,7 +174,7 @@ cat <<- FDISKCMD | fdisk /dev/vdb &>/dev/null
 	p
 	1
 
-	+256M
+	${SWAPPART1SIZE}
 	t
 	1
 	82
@@ -182,7 +182,7 @@ cat <<- FDISKCMD | fdisk /dev/vdb &>/dev/null
 	p
 	2
 
-	+256M
+	${LVPART2SIZE}
 	t
 	2
 	8e
@@ -190,7 +190,7 @@ cat <<- FDISKCMD | fdisk /dev/vdb &>/dev/null
 	p
 	3
 
-	+256M
+	${LVPART3SIZE}
 	t
 	3
 	8e
@@ -204,10 +204,11 @@ vgcreate -s $EXISTINGPESIZE $EXISTINGVGNAME /dev/vdb2 /dev/vdb3;
 #Create LV
 lvcreate -n $EXISTINGLVNAME -L $EXISTINGLVSIZE $EXISTINGVGNAME;
 #Create FileSystem
-mkfs -t $EXISTINGFSTYPE;
+mkfs -t $EXISTINGFSTYPE /dev/${EXISTINGVGNAME}/${EXISTINGLVNAME};
 #Add to /etc/fstab
 echo '/dev/$EXISTINGVGNAME/$EXISTINGLVNAME $EXISTINGMOUNTPOINT $EXISTINGFSTYPE defaults 0 0' >> /etc/fstab;
 echo '/dev/vdb1 swap swap defaults 0 0' >> /etc/fstab;
+mkdir ${EXISTINGMOUNTPOINT}
 #Change performance profile from default to anything else...
 tuned-adm profile throughput-performance;
 #Install autofs, but do not enable
