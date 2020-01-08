@@ -200,7 +200,7 @@ partprobe;
 #Create existing swap
 mkswap /dev/vdb1;
 #Create VG and set PE size
-vgcreate -s $EXISTINGPESIZE $EXISTINGVGNAME;
+vgcreate -s $EXISTINGPESIZE $EXISTINGVGNAME /dev/vdb2 /dev/vdb3;
 #Create LV
 lvcreate -n $EXISTINGLVNAME -L $EXISTINGLVSIZE $EXISTINGVGNAME;
 #Create FileSystem
