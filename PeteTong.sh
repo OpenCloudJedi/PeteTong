@@ -161,6 +161,8 @@ chown $FINDUSER:$FINDUSER {$FINDFILES};
 echo "removing network connection"
 nmcli con delete Wired\ connection\ 1;"
 }
+##^^^ still need to figure out how to keep this network delete from hanging
+##    the script and requiring a manual break operation.
 
 #Setup functions for serverb:
 
@@ -219,6 +221,53 @@ sed -i s/TIMEOUT=1/TIMEOUT=20/g /etc/default/grub ;
 grub2-mkconfig -o /boot/grub2/grub.cfg;"
 }
 
+###################################################################
+###################################################################
+################# Grade functions section #########################
+###################################################################
+###################################################################
+
+##servera grading functions
+
+#function grade_networking
+#function grade_httpd
+#function grade_hostname
+#function grade_firewalld
+#function grade_php
+#function grade_bashscript
+#function grade_users
+#function grade_groups
+#function grade_repos
+#function grade_shared_directory
+#function grade_fileperms
+#function grade_findfiles
+#function grade_grep
+#function grade_facl
+
+##serverb grading functions
+
+#function grade_rootpw
+#function grade_lvresize
+#function grade_vg
+#function grade_lv1
+#function grade_lv2
+#function grade_performance
+#function grade_vdo
+#function grade_stratis
+#function grade_swap
+#function grade_nfs
+#function grade_tar
+#function grade_rsync
+
+
+#26 total objectives. Perhaps grader just counts the number of successful
+#functions run and divide by 26 multiply by 100 and add a % to the end?
+###################################################################
+###################################################################
+################# Execute functions section #######################
+###################################################################
+###################################################################
+
 function setup_script() {
 #	setup_servera
 	setup_serverb
@@ -255,35 +304,3 @@ case $1 in
 		help
 	;;
 esac
-
-
-######### Temp bin
-#touch /root/part;
-#echo 'fdisk -u  /dev/vdb <<EOF' >> /root/part;
-#echo 'n' >> /root/part;
-#echo 'p' >> /root/part;
-#echo '1' >> /root/part;
-#echo '' >> /root/part;
-#echo '+256M' >> /root/part;
-#echo 't' >> /root/part;
-#echo '82' >> /root/part;
-#echo 'n' >> /root/part;
-#echo 'p' >> /root/part;
-#echo '2' >> /root/part;
-#echo '' >> /root/part;
-#echo '+256M' >> /root/part;
-#echo 't' >> /root/part;
-#echo '2' >> /root/part;
-#echo '8e' >> /root/part;
-#echo 'n' >> /root/part;
-#echo 'p' >> /root/part;
-#echo '3' >> /root/part;
-#echo '' >> /root/part;
-#echo '+1500M' >> /root/part;
-#echo 't' >> /root/part;
-#echo '3' >> /root/part;
-#echo '8e' >> /root/part;
-#echo 'w' >> /root/part;
-#echo 'EOF' >> /root/part;
-#chmod +x /root/part;
-#./part;
