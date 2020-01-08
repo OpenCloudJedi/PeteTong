@@ -45,7 +45,7 @@ SETUPLABEL="/tmp/.setuplabel"
 
 ##### Network Settings #####
 CONNAME=
-ORIGINALCON="Wired Connection 1"
+ORIGINALCON="Wired\ Connection\ 1"
 
 ##### VG & LV #####
 EXISTINGVGNAME="existingvg01"
@@ -81,8 +81,8 @@ SUUID=
 CHAGEUSER1=
 CHAGEUSER2=
 PASSWDEXP="Password expires"
-FINDUSER=
-FINDFILES=
+FINDUSER="finduser"
+FINDFILES="/tmp/findfile1,/var/log/findfile2,/etc/findfile3,/home/findfile4"
 
 
 ##### Timezone #####
@@ -141,7 +141,8 @@ listen 84
 	ErrorLog	logs/localhost.error.log
 </VirtualHost>
 EOF
-
+wget -O /test/index.html http://cloudjedi.org/starwars.html
+systemctl restart httpd &>/dev/null;
 #Delete Repositories
 rm -f /etc/yum.repos.d/*.repo;
 #Create $FINDUSER
@@ -149,15 +150,15 @@ echo "creating user: ${FINDUSER}";
 useradd $FINDUSER;
 #Create files to be found $FINDFILES
 echo "creating files: ${FINDFILES}"
-touch $FINDFILES;
+touch {$FINDFILES};
 #Change Ownership of those files to the $FINDOWNER
 echo "changing ownership to "${FINDUSER}" for "${FINDFILES}"";
-chown $FINDUSER:$FINDUSER $FINDFILES;
+chown $FINDUSER:$FINDUSER {$FINDFILES};
 #Create $GREPFILE
 #wget github.com/OpenCloudJedi/${GREPFILE}
 #Remove networking
 echo "removing network connection"
-nmcli con delete "Wired Connection 1";"
+nmcli con delete Wired\ connection\ 1;"
 }
 
 #Setup functions for serverb:
@@ -213,8 +214,8 @@ grub2-mkconfig -o /boot/grub2/grub.cfg;"
 }
 
 function setup_script() {
-	setup_servera
-#	setup_serverb
+#	setup_servera
+	setup_serverb
 }
 
 if [[ $# -eq 0 ]]
