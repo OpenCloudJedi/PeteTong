@@ -45,7 +45,7 @@ SETUPLABEL="/tmp/.setuplabel"
 
 ##### Network Settings #####
 CONNAME=
-ORIGINALCON="Wired\ Connection\ 1"
+SERVERACON="Wired\ connection\ 1"
 
 ##### VG & LV #####
 EXISTINGVGNAME="existingvg01"
@@ -126,6 +126,19 @@ DOCROOT="/test"
 ###################################################################
 ###################################################################
 
+#  System functions
+
+function help() {
+	cat <<- EOF
+	Usage for $PROGNAME <options>
+
+	This is the setup script and grader for $PROGNAME.
+	OPTIONS:
+	   -setup		run the setup script to create the user environment
+	   -grade		run the grader script to check your work
+	   -help		show this help information
+	EOF
+}
 #Setup functions for servera:
 
 function setup_servera() {
@@ -159,7 +172,7 @@ chown $FINDUSER:$FINDUSER {$FINDFILES};
 #wget github.com/OpenCloudJedi/${GREPFILE}
 #Remove networking
 echo "removing network connection"
-nmcli con delete Wired\ connection\ 1;"
+nmcli con delete "${SERVERACON};"
 }
 ##^^^ still need to figure out how to keep this network delete from hanging
 ##    the script and requiring a manual break operation.
@@ -202,6 +215,7 @@ partprobe;
 #Create existing swap
 mkswap /dev/vdb1;
 #Create VG and set PE size
+pvcreate /dev/vdb2 /dev/vdb3
 vgcreate -s $EXISTINGPESIZE $EXISTINGVGNAME /dev/vdb2 /dev/vdb3;
 #Create LV
 lvcreate -n $EXISTINGLVNAME -L $EXISTINGLVSIZE $EXISTINGVGNAME;
@@ -275,7 +289,7 @@ function setup_script() {
 
 if [[ $# -eq 0 ]]
 then
-	printf "No arguments were passed to the script.\n"
+	help
 	exit 0
 	#  This should be replaced with a help function
 fi
