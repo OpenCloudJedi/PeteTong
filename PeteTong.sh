@@ -44,13 +44,8 @@ PROGNAME=$0
 SETUPLABEL="/tmp/.setuplabel"
 
 ##### Network Settings #####
-<<<<<<< HEAD
 CONNAME="conname"
 ORIGINALCON="Wired\ Connection\ 1"
-=======
-CONNAME=
-SERVERACON="Wired\ connection\ 1"
->>>>>>> beb381aaaa5f3d5421c50e53b7fd292ea3235801
 
 ##### VG & LV #####
 EXISTINGVGNAME="existingvg01"
@@ -89,8 +84,8 @@ TIMEZONE="America/Los_Angeles"
 TZSERVER="server classroom\.example\.com.*iburst"
 
 ##### Yum #####
-YUMREPO1="http://content.example.com/rhel8.0/x86_64/dvd/BaseOS"
-YUMREPO2="http://content.example.com/rhel8.0/x86_64/dvd/AppStream"
+YUMREPO1="baseurl.*=.*content\.example\.com\/rhel8.0\/x86_64\/dvd\/BaseOS"
+YUMREPO2="baseurl.*=.*content\.example.com\/rhel8.0\/x86_64\/dvd\/AppStream"
 
 ##### Files and Directories #####
 HOMEDIRUSER=
@@ -102,10 +97,10 @@ TARFILE=
 ORIGTARDIR=
 RSYNCSRC=
 RSYNCDEST=
-FACLDIRONE=
-FACLDIRTWO=
-FACLUSERONE=
-FACLUSERTWO=
+FACLONE="/tmp/fstab_copy"
+FACLTWO="/tmp/fstab_copy"
+FACLUSERONE="jyn"
+FACLUSERTWO="cassian"
 GREPFILE=
 
 ##### Cron #####
@@ -271,12 +266,87 @@ if ! hostnamectl | grep -q $CHECKHOSTNAME
 #function grade_bashscript() {}
 #function grade_users() {}
 #function grade_groups() {}
-#function grade_repos() {}
-#function grade_shared_directory() {}
+
+function grade_repos() {
+	grep -R $YUMREPO1 /etc/yum.repos.d/ &>dev/null
+	local result=$?
+
+	if [[ "${result}" ne 0 ]]; then
+		printf "Check your BaseOS yum repository again "
+		print_FAIL
+		return 1
+	fi
+	grep -R $YUMREPO2 /etc/yum.repos.d/ &>dev/null
+	local result=$?
+
+	if [[ "${result}" ne 0 ]]; then
+		printf "Check your AppStream yum repository again "
+		print_FAIL
+		return 1
+	fi
+}
+
+function grade_shared_directory() {
+	if [ $(stat -c %G "$COLLABDIR") != "$COLLABGROUP" ]
+	then
+		printf "%s does not have correct group ownership " "$COLLABDIR"
+		print_FAIL
+		return 1
+	fi
+
+	if [ $(stat -c %a "$COLLABDIR") -ne 2770 ]
+	then
+		printf "%s does not have correct permissions " "$COLLABDIR"
+		print_FAIL
+		return 1
+	fi
+}
 #function grade_fileperms() {}
 #function grade_findfiles() {}
 #function grade_grep() {}
-#function grade_facl() {}
+
+	function grade_facl() {
+		if [ ! -d $FACLDIRONE ]
+  then
+    printf "%s does not exist " "$FACLDIRONE"
+    print_FAIL
+    return 1
+  else
+  local facl=$(getfacl -p "$FACLONE" | "^user:"$FACLUSERONE":")
+  local checkfacl="user:"$FACLUSERONE":rw"
+  if ! [ "$facl" = "$checkfacl" ]; then
+     printf "User $FACLUSERONE permission settings on %s are incorrect.." "$FACLONE"
+     print_FAIL
+     return 1
+  fi
+  fi
+
+	if [ ! -d "FACLDIRTWO" ]
+  then
+    printf "%s does not exist " "$FACLTWO"
+    print_FAIL
+    return 1
+  else
+  local facl=$(getfacl -p "$FACLTWO" | "^user:"$FACLUSERTWO":")
+  local checkfacl="user:"$FACLUSERTWO":---"
+  if ! [ "$facl" = "$checkfacl" ]; then
+     printf "User $FACLUSERTWO permission settings on %s are incorrect.." "$FACLDIRTWO"
+     print_FAIL
+     return 1if [ ! -d "FACLDIRTWO" ]
+  then
+    printf "%s does not exist " "$FACLDIRTWO"
+    print_FAIL
+    return 1
+  else
+  local facl=$(getfacl -p "$FACLDIRTWO" | "^user:"$FACLUSERTWO":")
+  local checkfacl="user:"$FACLUSERTWO":---"
+  if ! [ "$facl" = "$checkfacl" ]; then
+     printf "User permission settings on %s are incorrect.." "$FACLTWO"
+     print_FAIL
+     return 1
+  fi
+  fi
+	}
 
 ##serverb grading functions
 
@@ -316,6 +386,12 @@ then
 	#  This should be replaced with a help function
 fi
 
+function lab_grade() {
+	#grade_hostname
+	#grade_repos
+	#grade_shared_directory
+	#grade_facl
+}
 
 
 
