@@ -44,7 +44,7 @@ PROGNAME=$0
 SETUPLABEL="/tmp/.setuplabel"
 
 ##### Network Settings #####
-CONNAME=
+CONNAME="conname"
 ORIGINALCON="Wired\ Connection\ 1"
 
 ##### VG & LV #####
@@ -55,39 +55,32 @@ EXISTINGLVSIZE="400M"
 EXISTINGFSTYPE="ext4"
 EXISTINGMOUNTPOINT="/mountpoint"
 LVNAMEONE="lv1"
-LVSIZEONEMIN=
-LVSIZEONEMAX=
-LVMMNTONE=
-LVONETYPE=
+LVSIZEONEMIN="450M"
+LVSIZEONEMAX="510M"
+LVMMNTONE="/mountpoint1"
+LVONETYPE="xfs"
 LVNAMETWO="lv2"
-LVSIZETWOMIN=
-LVSIZETWOMAX=
-LVMMNTTWO=
-LVTWOTYPE=
 LVRESIZE=
 SWAPPART1SIZE="+256M"
 LVPART2SIZE="+1G"
 LVPART3SIZE="+512M"
 
 ##### Users and Groups #####
-GROUPNAME=
+GROUPNAME="group1"
 ARRAYUSERS=( user1 user2 user3 user4 ) #  may end up changing from array
-NEWPASS=
-ROOTPASS=
+NEWPASS="password"
+ROOTPASS="password"
 #  If using a special user for facls or etc its details can be set here
 #  along with a UID for the user
-SPECIALUSR=
-SPCLPWD=
-SUUID=
-CHAGEUSER1=
-CHAGEUSER2=
-PASSWDEXP="Password expires"
+SPECIALUSR="specialuser"
+SPCLPWD="specialpass"
+SUUID="1313"
 FINDUSER="finduser"
 FINDFILES="/tmp/findfile1,/var/log/findfile2,/etc/findfile3,/home/findfile4"
 
 
 ##### Timezone #####
-TIMEZONE="America/"
+TIMEZONE="America/Los_Angeles"
 TZSERVER="server classroom\.example\.com.*iburst"
 
 ##### Yum #####
@@ -227,41 +220,65 @@ grub2-mkconfig -o /boot/grub2/grub.cfg;"
 ###################################################################
 ###################################################################
 
+#  Colored PASS and FAIL for grading
+function print_PASS() {
+	echo -e '\033[1;32mPASS\033[0;39m'
+}
+
+function print_FAIL() {
+	echo -e '\033[1;31mFAIL\033[0;39m'
+}
+
 ##servera grading functions
 
-#function grade_networking
-#function grade_httpd
-#function grade_hostname
-#function grade_firewalld
-#function grade_php
-#function grade_bashscript
-#function grade_users
-#function grade_groups
-#function grade_repos
-#function grade_shared_directory
-#function grade_fileperms
-#function grade_findfiles
-#function grade_grep
-#function grade_facl
+#function grade_networking() {}
+####################httpd section#########
+#function grade_httpd() {}
+
+function grade_hostname() {
+if ! hostnamectl | grep -q $CHECKHOSTNAME
+    	then
+		printf "The static hostname is not configured correctly "
+		print_FAIL
+		return 1
+	fi
+
+	printf "The static hostname has been set correctly "
+	print_PASS
+	return 0
+}
+#function grade_firewalld() {}
+#function grade_php() {}
+#function grade_bashscript() {}
+#function grade_users() {}
+#function grade_groups() {}
+#function grade_repos() {}
+#function grade_shared_directory() {}
+#function grade_fileperms() {}
+#function grade_findfiles() {}
+#function grade_grep() {}
+#function grade_facl() {}
 
 ##serverb grading functions
 
-#function grade_rootpw
-#function grade_lvresize
-#function grade_vg
-#function grade_lv1
-#function grade_lv2
-#function grade_performance
-#function grade_vdo
-#function grade_stratis
-#function grade_swap
-#function grade_nfs
-#function grade_tar
-#function grade_rsync
+#function grade_rootpw() {}
+#function grade_lvresize() {}
+#function grade_vg() {}
+#function grade_lv1() {}
+#function grade_lv2() {}
+#function grade_performance() {}
+#function grade_vdo() {}
+#function grade_stratis() {}
+#function grade_swap() {}
+#function grade_nfs() {}
+#function grade_tar() {}
+#function grade_rsync() {}
 
 
 #26 total objectives. Perhaps grader just counts the number of successful
 #functions run and divide by 26 multiply by 100 and add a % to the end?
+#with messages for 0-70 70-99 and 100% successful mastery.
+
 ###################################################################
 ###################################################################
 ################# Execute functions section #######################
@@ -279,6 +296,9 @@ then
 	exit 0
 	#  This should be replaced with a help function
 fi
+
+
+
 
 # case statement that calls all functions
 
