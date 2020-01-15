@@ -274,7 +274,7 @@ function grade_httpd() {
     echo " - httpd.service not set to be started at boot"
     return 1
   fi
-  if ! curl -v --silent localhost 2>&1 | grep -q 'You got it working'; then
+  if ! curl -v --silent localhost:84 2>&1 | grep -q 'You got it working'; then
     print_FAIL
     echo " - You are not serving the correct webpage"
     return 1
