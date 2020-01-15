@@ -54,16 +54,21 @@ EXISTINGLVNAME="existinglv01"
 EXISTINGLVSIZE="400M"
 EXISTINGFSTYPE="ext4"
 EXISTINGMOUNTPOINT="/mountpoint"
+EXISTINGFSLOW="650"
+EXISTINGFSHIGH="750"
+VGNAME="VolGroup"
+PESIZE="16M"
 LVNAMEONE="lv1"
-LVSIZEONEMIN="450M"
-LVSIZEONEMAX="510M"
+LVSIZEONEMIN="450"
+LVSIZEONEMAX="510"
 LVMMNTONE="/mountpoint1"
 LVONETYPE="xfs"
 LVNAMETWO="lv2"
-LVRESIZE=
 SWAPPART1SIZE="+256M"
 LVPART2SIZE="+1G"
 LVPART3SIZE="+512M"
+SWAPBYTELOW="500000"
+SWAPBYTEHIGH="540000"
 
 ##### Users and Groups #####
 GROUPNAME="group1"
@@ -76,8 +81,12 @@ SPECIALUSR="specialuser"
 SPCLPWD="specialpass"
 SUUID="1313"
 FINDUSER="finduser"
+FINDDIR="/root/findfiles"
 FINDFILES="/tmp/findfile1,/var/log/findfile2,/etc/findfile3,/home/findfile4"
-
+FOUNDFILE1="findfile1"
+FOUNDFILE2="findfile2"
+FOUNDFILE3="findfile3"
+FOUNDFILE4="findfile4"
 
 ##### Timezone #####
 TIMEZONE="America/Los_Angeles"
@@ -95,13 +104,14 @@ COLLABDIR=
 COLLABGROUP=
 TARFILE=
 ORIGTARDIR=
-RSYNCSRC=
-RSYNCDEST=
+RSYNCSRC="/boot"
+RSYNCDEST="/rsync_destination"
 FACLONE="/tmp/fstab_copy"
 FACLTWO="/tmp/fstab_copy"
 FACLUSERONE="jyn"
 FACLUSERTWO="cassian"
-GREPFILE=
+GREPFILESRC="/usr/share/dict/words"
+GREPFILEDEST="/root/grepfile"
 
 ##### Cron #####
 CRONUSER=
@@ -247,7 +257,29 @@ function print_FAIL() {
 
 #function grade_networking() {}
 ####################httpd section#########
-#function grade_httpd() {}
+function grade_httpd() {
+	pad "Checking Apache service and SELINUX"
+	if ! getenforce | grep -q 'Enforcing'; then
+    print_FAIL
+    echo " - selinux is not set to enforcing"
+    return 1
+  fi
+	if ! systemctl status httpd.service &> /dev/null; then
+    print_FAIL
+    echo " - httpd.service is not running"
+    return 1
+  fi
+  if ! systemctl status httpd 2> /dev/null | grep -q '^[[:space:]]*Loaded.*enabled'; then
+    print_FAIL
+    echo " - httpd.service not set to be started at boot"
+    return 1
+  fi
+  if ! curl -v --silent localhost 2>&1 | grep -q 'You got it working'; then
+    print_FAIL
+    echo " - You are not serving the correct webpage"
+    return 1
+  fi
+}
 
 function grade_hostname() {
 if ! hostnamectl | grep -q $CHECKHOSTNAME
@@ -264,8 +296,79 @@ if ! hostnamectl | grep -q $CHECKHOSTNAME
 #function grade_firewalld() {}
 #function grade_php() {}
 #function grade_bashscript() {}
-#function grade_users() {}
-#function grade_groups() {}
+	function grade_users() {
+		pad "Checking for correct user setup"
+
+	  grep "${GROUPNAME}:x:*" /etc/group &>/dev/null
+	  RESULT=$?
+	  if [ "${RESULT}" -ne 0 ]; then
+	    print_FAIL
+	    echo " - The $GROUPNAME group does not exist."
+	    return 1
+	  fi
+
+	  for USER in $SPECIALUSR $ARRAYUSERS; do
+	    grep "$USER:x:.*" /etc/passwd &>/dev/null
+	    RESULT=$?
+	    if [ "${RESULT}" -ne 0 ]; then
+	      print_FAIL
+	      echo " - The user $USER has not been created."
+	      return 1
+	    fi
+	  done
+
+	  for USER in ${ARRAYUSERS}; do
+	    grep "${GROUPNAME}:x:.*$USER.*" /etc/group &>/dev/null
+	    RESULT=$?
+	    if [ "${RESULT}" -ne 0 ]; then
+	      print_FAIL
+	      echo " - The user $USER is not in the $GROUPNAME group."
+	      return 1
+	    fi
+	  done
+
+#Still need an evaluation for primary group.
+
+	  #if ! primary_group 'BB8:' 'BB8' ||
+	  #! primary_group 'R2D2:' 'R2D2' ||
+	  #! primary_group 'C3PO:' 'C3PO' ||
+	  #! primary_group 'badguys:' 'Vader'; then
+		#return 1
+	  #fi
+
+	  if ! cat /etc/passwd | grep "$SPECIALUSR" | grep -q "$SUUID"; then
+	    print_FAIL
+	    echo " - The user ${SPECIALUSR}s uid is not set to "$SUUID"
+	    return 1
+	  fi
+
+	  for USER in ${ARRAYUSERS}; do
+	    FULLHASH=$(grep "^$USER:" /etc/shadow | cut -d: -f 2)
+	    SALT=$(grep "^$USER:" /etc/shadow | cut -d'$' -f3)
+	    PERLCOMMAND="print crypt(\"${NEWPASS}\", \"\\\$6\\\$${SALT}\");"
+	    NEWHASH=$(perl -e "${PERLCOMMAND}")
+
+	    if [ "${FULLHASH}" != "${NEWHASH}" ]; then
+	      print_FAIL
+	      echo " - The password for user $USER is not set to ${NEWPASS}"
+	      return 1
+	    fi
+	  done
+
+	  for USER in $SPECIALUSR; do
+	    FULLHASH=$(grep "^$USER:" /etc/shadow | cut -d: -f 2)
+	    SALT=$(grep "^$USER:" /etc/shadow | cut -d'$' -f3)
+	    PERLCOMMAND="print crypt(\"${SPCLPWD}\", \"\\\$6\\\$${SALT}\");"
+	    NEWHASH=$(perl -e "${PERLCOMMAND}")
+
+	    if [ "${FULLHASH}" != "${NEWHASH}" ]; then
+	      print_FAIL
+	      echo " - The password for user $USER is not set to ${SPCLPWD}"
+	      return 1
+	    fi
+	  done
+	}
+
 
 function grade_repos() {
 	grep -R $YUMREPO1 /etc/yum.repos.d/ &>dev/null
@@ -301,8 +404,93 @@ function grade_shared_directory() {
 		return 1
 	fi
 }
-#function grade_fileperms() {}
-#function grade_findfiles() {}
+
+	function grade_fileperms() {
+		pad "Checking permissions and ownership"
+
+	  if ! [ -d ${COLLABDIR} ]; then
+	    print_FAIL
+	    echo " - Directory ${COLLABDIR} not found"
+	    return 1
+	  fi
+	  if ! getfacl ${COLLABDIR} 2> /dev/null | grep -q '^# owner: root$' 2> /dev/null; then
+	    print_FAIL
+	    echo " - Ownership of ${COLLABDIR} not set to 'root'"
+	    return 1
+	  fi
+	  if ! getfacl ${COLLABDIR} 2> /dev/null | grep -q "^# group: ${COLLABGROUP}$" 2> /dev/null; then
+	    print_FAIL
+	    echo " - Group ownership of ${COLLABDIR} not set to ${COLLABGROUP}"
+	    return 1
+	  fi
+	  if ! getfacl ${COLLABDIR} 2> /dev/null | grep -q '^user::rwx$' 2> /dev/null; then
+	    print_FAIL
+	    echo " - User permissions not set to 'rwx' on ${COLLABDIR}"
+	    return 1
+	  fi
+	  if ! getfacl ${COLLABDIR} 2> /dev/null | grep -q '^group::rwx$' 2> /dev/null; then
+	    print_FAIL
+	    echo " - Group permissions not set to 'rwx' on ${COLLABDIR}"
+	    return 1
+	  fi
+	  if ! getfacl ${COLLABDIR} 2> /dev/null | grep -q '^other::---$' 2> /dev/null; then
+	    print_FAIL
+	    echo " - Other permissions not set to no access on ${COLLABDIR}"
+	    return 1
+	  fi
+		if ! getfacl ${COLLABDIR} 2> /dev/null | grep -q '^flags:-s-$' 2> /dev/null; then
+	    print_FAIL
+	    echo " - Special permissions (SETGID bit) not set on ${COLLABDIR}"
+	    return 1
+	  fi
+
+	  print_PASS
+	  return 0
+	}
+
+	function grade_findfiles() {
+		  pad "Checking ${FINDDIR} has the correct files"
+
+		  if [ ! -d ${FINDDIR} ]; then
+		    print_FAIL
+		    echo "The target directory ${FINDDIR} does not exist."
+		    return 1
+		  fi
+
+		  if ! ls ${FINDDIR} | grep -q "${FINDUSER}"; then
+		    print_FAIL
+		    echo "${FINDUSER}s files were not copied properly."
+		    return 1
+		  fi
+
+		  if ! ls ${FINDDIR} | grep -q "${FOUNDFILE1}"; then
+		    print_FAIL
+		    echo "${FINDUSER}s files were not copied properly. Did not find ${FOUNDFILE1}"
+		    return 1
+		  fi
+
+		  if ! ls ${FINDDIR} | grep -q "${FOUNDFILE2}"; then
+		    print_FAIL
+		    echo "${FINDUSER}s files were not copied properly. Did not find ${FOUNDFILE2}"
+		    return 1
+		  fi
+
+		  if ! ls ${FINDDIR} | grep -q "${FOUNDFILE3}"; then
+		    print_FAIL
+		    echo "${FINDUSER}s files were not copied properly. Did not find ${FOUNDFILE3}"
+		    return 1
+		  fi
+
+			if ! ls ${FINDDIR} | grep -q "${FOUNDFILE4}"; then
+		    print_FAIL
+		    echo "${FINDUSER}s files were not copied properly. Did not find ${FOUNDFILE4}"
+		    return 1
+		  fi
+
+		  print_PASS
+		  return 0
+
+	}
 #function grade_grep() {}
 
 	function grade_facl() {
@@ -332,7 +520,8 @@ function grade_shared_directory() {
   if ! [ "$facl" = "$checkfacl" ]; then
      printf "User $FACLUSERTWO permission settings on %s are incorrect.." "$FACLDIRTWO"
      print_FAIL
-     return 1if [ ! -d "FACLDIRTWO" ]
+     return 1
+		 if [ ! -d "FACLDIRTWO" ]
   then
     printf "%s does not exist " "$FACLDIRTWO"
     print_FAIL
@@ -350,18 +539,184 @@ function grade_shared_directory() {
 
 ##serverb grading functions
 
-#function grade_rootpw() {}
-#function grade_lvresize() {}
-#function grade_vg() {}
-#function grade_lv1() {}
+	function grade_rootpw() {
+		for USER in root; do
+	    FULLHASH=$(grep "^$USER:" /etc/shadow | cut -d: -f 2)
+	    SALT=$(grep "^$USER:" /etc/shadow | cut -d'$' -f3)
+	    PERLCOMMAND="print crypt(\"${ROOTPASS}\", \"\\\$6\\\$${SALT}\");"
+	    NEWHASH=$(perl -e "${PERLCOMMAND}")
+
+	    if [ "${FULLHASH}" != "${NEWHASH}" ]; then
+	      print_FAIL
+	      echo " - The password for user $USER is not set to ${ROOTPASS}"
+	      return 1
+	    fi
+	  done
+	}
+	function grade_lvresize() {
+		read LV VG A SIZE A <<< $(lvs --noheadings --units=m ${EXISTINGVGNAME} 2>/dev/null | grep ${EXISTINGLVNAME}) &> /dev/null
+	  if [ "${LV}" != "${EXISTINGLVNAME}" ]; then
+	    print_FAIL
+	    echo " - No LV named ${EXISTINGLVNAME} found in VG ${EXISTINGVGNAME} we may have destroyed the existing data."
+	    return 1
+	  fi
+	  SIZE=$(echo ${SIZE} | cut -d. -f1)
+	  if  ! (( ${EXISTINGFSLOW} < ${SIZE} && ${SIZE} < ${EXISTINGFSHIGH} )); then
+	    print_FAIL
+	    echo " - Logical Volume ${EXISTINGLVNAME} is not the correct size."
+	    return 1
+	  fi
+	}
+	function grade_vg() {
+		pad "Checking for new VG with correct PE size"
+
+	  read VG A A A A SIZE A <<< $(vgs --noheadings --units=m ${VGNAME} 2>/dev/null) &> /dev/null
+	  if [ "${VG}" != "$VGNAME" ]; then
+	    print_FAIL
+	    echo " - No Volume Group named ${VGNAME} found"
+	    return 1
+	  fi
+
+	  if ! vgdisplay ${VGNAME} | grep 'PE Size' | grep -q "${PESIZE}"; then
+	    print_FAIL
+	    echo " - Incorrect PE size on volume group $VGNAME"
+	    return 1
+	  fi
+	}
+	function grade_lv1() {
+		read LV VG A SIZE A <<< $(lvs --noheadings --units=m ${VGNAME} 2>/dev/null | grep ${LVNAMEONE}) &> /dev/null
+	  if [ "${LV}" != "${LVNAMEONE}" ]; then
+	    print_FAIL
+	    echo " - No LV named ${LVNAMEONE} found in VG ${VGNAME}"
+	    return 1
+	  fi
+	  SIZE=$(echo ${SIZE} | cut -d. -f1)
+	  if  ! (( ${LVSIZEONEMIN} < ${SIZE} && ${SIZE} < ${LVSIZEONEMAX} )); then
+	    print_FAIL
+	    echo " - Logical Volume ${LVNAMEONE} is not the correct size."
+	    return 1
+	  fi
+		read DEV TYPE MOUNTPOINT <<< $(df --output=source,fstype,target ${LVMMNTONE} 2> /dev/null | grep ${LVMMNTONE} 2> /dev/null) &> /dev/null
+	  if [ "${DEV}" != "/dev/mapper/${VGNAME}-${LVNAMEONE}" ]; then
+	    print_FAIL
+	    echo " - Wrong device mounted on ${LVMMNTONE}"
+	    return 1
+	  fi
+	  if [ "${TYPE}" != "${LVONETYPE}" ]; then
+	    print_FAIL
+	    echo " - Wrong file system type mounted on ${LVMMNTONE}"
+	    return 1
+	  fi
+	  if [ "${MOUNTPOINT}" != "${LVMMNTONE}" ]; then
+	    print_FAIL
+	    echo " - Wrong mountpoint"
+	    return 1
+	  fi
+	}
 #function grade_lv2() {}
-#function grade_performance() {}
+	function grade_performance() {
+		pad "Checking performance profile"
+		if [[ tuned-adm current -ne "virtual-guest" ]]; then
+			print_FAIL
+			echo "The tuning profile should be set to virtual-guest."
+			return 1
+		fi
+	}
 #function grade_vdo() {}
 #function grade_stratis() {}
-#function grade_swap() {}
-#function grade_nfs() {}
-#function grade_tar() {}
-#function grade_rsync() {}
+	function grade_swap() {
+		pad "Checking for new swap partition"
+
+	  NUMSWAPS=$(( $(swapon -s | wc -l) - 1 ))
+	  if [ ${NUMSWAPS} -lt 1 ]; then
+	    print_FAIL
+	    echo " - No swap partition found. Did you delete the existing?"
+	    return 1
+	  fi
+	  if [ ${NUMSWAPS} -gt 2 ]; then
+	    print_FAIL
+	    echo " - More than 2 swap partitions  found."
+	    return 1
+	  fi
+
+	  read PART TYPE SIZE USED PRIO <<< $(swapon -s 2>/dev/null | tail -n1 2>/dev/null) 2>/dev/null
+	  if [ "${TYPE}" != "partition" ]; then
+	    print_FAIL
+	    echo " - Swap is not a partition."
+	  fi
+	  if  ! (( ${SWAPBYTELOW} < ${SIZE} && ${SIZE} < ${SWAPBYTEHIGH} )); then
+	    print_FAIL
+	    echo " - Swap is not the correct size."
+	    return 1
+	  fi
+
+	  if ! grep -q 'UUID.*swap' /etc/fstab; then
+	    print_FAIL
+	    echo " - Swap isn't mounted from /etc/fstab by UUID"
+	    return 1
+	  fi
+
+	  print_PASS
+	  return 0
+	}
+	function grade_nfs() {
+		pad "Checking automounted home directories"
+	  TESTUSER=production5
+	  TESTHOME=/localhome/${TESTUSER}
+	  DATA="$(su - ${TESTUSER} -c pwd 2>/dev/null)"
+	  if [ "${DATA}" != "${TESTHOME}" ]; then
+	    print_FAIL
+	    echo " - Home directory not available for ${TESTUSER}"
+	    return 1
+	  fi
+	  if ! mount | grep 'home-directories' | grep -q nfs; then
+	    print_FAIL
+	    echo " - ${TESTHOME} not mounted over NFS"
+	    return 1
+	  fi
+	  	  print_PASS
+	  return 0
+	}
+
+	function grade_tar() {
+		pad "Checking for correct compressed archive"
+
+	  if [ ! -f $TARFILE ]; then
+	    print_FAIL
+	    echo " - The $TARFILE archive does not exist."
+	    return 1
+	  fi
+
+	  (tar tf $TARFILE | grep "$ORIGTARDIR") &>/dev/null
+	  RESULT=$?
+	  if [ "${RESULT}" -ne 0 ]; then
+	    print_FAIL
+	    echo " - The archive content is not correct."
+	    return 1
+	  fi
+	  print_PASS
+	  return 0
+	}
+
+	function grade_rsync {
+	  pad "Checking for correct rsync backup"
+
+	  if [ ! -d $RSYNCDEST ]; then
+	    print_FAIL
+	    echo " - The target directory $RSYNCDEST does not exist."
+	    return 1
+	  fi
+
+	  rsync -avn $RSYNCSRC $RSYNCDEST &>/dev/null
+	  RESULT=$?
+	  if [ "${RESULT}" -ne 0 ]; then
+	    print_FAIL
+	    echo " - Directory was not rsynced properly."
+	    return 1
+	  fi
+	  print_PASS
+	  return 0
+}
 
 
 #26 total objectives. Perhaps grader just counts the number of successful
@@ -386,11 +741,25 @@ then
 	#  This should be replaced with a help function
 fi
 
+#We should uncomment grade functions one at a time to simplify testing.
 function lab_grade() {
 	#grade_hostname
 	#grade_repos
 	#grade_shared_directory
 	#grade_facl
+	#grade_rsync
+	#grade_rootpw
+	#grade_users
+	#grade_httpd
+	#grade_tar
+	#grade_nfs
+	#grade_swap
+	#grade_vg
+	#grade_lv1
+	#grade_lvresize
+	#grade_findfiles
+	#grade_fileperms
+	#grade_performance
 }
 
 
