@@ -147,7 +147,6 @@ function help() {
 function setup_servera() {
 #Install Apache
 ssh root@servera "yum install httpd -y;
-systemctl enable httpd --now;
 #Create VirtualHost for port 84 with DocumentRoot outside of /var/www/html
 cat > /etc/httpd/conf.d/servera.conf << EOF
 listen 84
@@ -175,7 +174,8 @@ chown $FINDUSER:$FINDUSER {$FINDFILES};
 #wget github.com/OpenCloudJedi/${GREPFILE}
 #Remove networking
 echo "removing network connection"
-nmcli con delete "${SERVERACON};"
+#nmcli con delete "${SERVERACON}";
+"
 }
 ##^^^ still need to figure out how to keep this network delete from hanging
 ##    the script and requiring a manual break operation.
