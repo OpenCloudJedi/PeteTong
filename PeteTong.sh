@@ -338,7 +338,7 @@ if ! hostnamectl | grep -q $CHECKHOSTNAME
 
 	  if ! cat /etc/passwd | grep "$SPECIALUSR" | grep -q "$SUUID"; then
 	    print_FAIL
-	    echo " - The user ${SPECIALUSR}s uid is not set to "$SUUID"
+	    echo " - The user ${SPECIALUSR}s uid is not set to $SUUID"
 	    return 1
 	  fi
 
