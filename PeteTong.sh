@@ -374,7 +374,7 @@ function grade_repos() {
 	grep -R $YUMREPO1 /etc/yum.repos.d/ &>dev/null
 	local result=$?
 
-	if [[ "${result}" ne 0 ]]; then
+	if [[ "${result}" -ne 0 ]]; then
 		printf "Check your BaseOS yum repository again "
 		print_FAIL
 		return 1
@@ -382,7 +382,7 @@ function grade_repos() {
 	grep -R $YUMREPO2 /etc/yum.repos.d/ &>dev/null
 	local result=$?
 
-	if [[ "${result}" ne 0 ]]; then
+	if [[ "${result}" -ne 0 ]]; then
 		printf "Check your AppStream yum repository again "
 		print_FAIL
 		return 1
@@ -535,6 +535,8 @@ function grade_shared_directory() {
      return 1
   fi
   fi
+  fi
+  fi
 	}
 
 ##serverb grading functions
@@ -613,15 +615,15 @@ function grade_shared_directory() {
 	    return 1
 	  fi
 	}
-#function grade_lv2() {}
-	function grade_performance() {
-		pad "Checking performance profile"
-		if [[ tuned-adm current -ne "virtual-guest" ]]; then
-			print_FAIL
-			echo "The tuning profile should be set to virtual-guest."
-			return 1
-		fi
-	}
+##function grade_lv2() {}
+##	function grade_performance() {
+##		pad "Checking performance profile"
+##		if [[ tuned-adm current -ne "virtual-guest" ]]; then
+##			print_FAIL
+##			echo "The tuning profile should be set to virtual-guest."
+##			return 1
+##		fi
+##	}
 #function grade_vdo() {}
 #function grade_stratis() {}
 	function grade_swap() {
@@ -743,7 +745,7 @@ fi
 
 #We should uncomment grade functions one at a time to simplify testing.
 function lab_grade() {
-	#grade_hostname
+	grade_hostname
 	#grade_repos
 	#grade_shared_directory
 	#grade_facl
@@ -778,9 +780,9 @@ case $1 in
   	#sleep 4
 		#reboot
 	;;
-	#grade | --grade )
-	#	lab_grade
-	#;;
+	grade | --grade )
+		lab_grade
+	;;
 	help | --help )
 			printf "Proper usage is ./scriptname setup or ./scriptname grade depending on if you are setting things up or grading. \n"
 	;;
