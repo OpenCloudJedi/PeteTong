@@ -39,7 +39,7 @@ export LANG=en_US.UTF-8
 #  Alter these to suit your personal guide #############
 ########################################################
 
-CHECKHOSTNAME=
+CHECKHOSTNAME="servera.lab.example.com"
 PROGNAME=$0
 SETUPLABEL="/tmp/.setuplabel"
 
@@ -100,10 +100,10 @@ YUMREPO2="baseurl.*=.*content\.example.com\/rhel8.0\/x86_64\/dvd\/AppStream"
 HOMEDIRUSER=
 USERDIR=
 NOSHELLUSER=
-COLLABDIR=
+COLLABDIR="/collabdir"
 COLLABGROUP=
-TARFILE=
-ORIGTARDIR=
+TARFILE="/root/tar.tar.gz"
+ORIGTARDIR="lib"  #for /var/lib This Variable works in the script if directed at the relative path
 RSYNCSRC="/boot"
 RSYNCDEST="/rsync_destination"
 FACLONE="/tmp/fstab_copy"
@@ -258,7 +258,7 @@ function print_FAIL() {
 #function grade_networking() {}
 ####################httpd section#########
 function grade_httpd() {
-	pad "Checking Apache service and SELINUX"
+	printf "Checking Apache service and SELINUX \n"
 	if ! getenforce | grep -q 'Enforcing'; then
     print_FAIL
     echo " - selinux is not set to enforcing"
@@ -279,10 +279,13 @@ function grade_httpd() {
     echo " - You are not serving the correct webpage"
     return 1
   fi
+	printf "The webite is serving the page correctly.  "
+	print_PASS
+	return 0
 }
 
 function grade_hostname() {
-if ! hostnamectl | grep -q $CHECKHOSTNAME
+if ! hostnamectl | grep -q "${CHECKHOSTNAME}"
     	then
 		printf "The static hostname is not configured correctly "
 		print_FAIL
@@ -297,7 +300,7 @@ if ! hostnamectl | grep -q $CHECKHOSTNAME
 #function grade_php() {}
 #function grade_bashscript() {}
 	function grade_users() {
-		pad "Checking for correct user setup"
+		printf "Checking for correct user setup"
 
 	  grep "${GROUPNAME}:x:*" /etc/group &>/dev/null
 	  RESULT=$?
@@ -371,7 +374,7 @@ if ! hostnamectl | grep -q $CHECKHOSTNAME
 
 
 function grade_repos() {
-	grep -R $YUMREPO1 /etc/yum.repos.d/ &>dev/null
+	grep -R "$YUMREPO1" /etc/yum.repos.d/ &>/dev/null
 	local result=$?
 
 	if [[ "${result}" -ne 0 ]]; then
@@ -379,7 +382,7 @@ function grade_repos() {
 		print_FAIL
 		return 1
 	fi
-	grep -R $YUMREPO2 /etc/yum.repos.d/ &>dev/null
+	grep -R $YUMREPO2 /etc/yum.repos.d/ &>/dev/null
 	local result=$?
 
 	if [[ "${result}" -ne 0 ]]; then
@@ -387,10 +390,13 @@ function grade_repos() {
 		print_FAIL
 		return 1
 	fi
+	printf "Your repositories have been setup correctly. Both appear to work. "
+        print_PASS
+        return 0
 }
 
 function grade_shared_directory() {
-	if [ $(stat -c %G "$COLLABDIR") != "$COLLABGROUP" ]
+	if [ $(stat -c %G "$COLLABDIR") != "$GROUPNAME" ]
 	then
 		printf "%s does not have correct group ownership " "$COLLABDIR"
 		print_FAIL
@@ -403,10 +409,13 @@ function grade_shared_directory() {
 		print_FAIL
 		return 1
 	fi
+	printf "Your shared directory has been setup correctly with the correct ownershop and permissions."
+        print_PASS
+        return 0
 }
 
 	function grade_fileperms() {
-		pad "Checking permissions and ownership"
+		printf "Checking permissions and ownership"
 
 	  if ! [ -d ${COLLABDIR} ]; then
 	    print_FAIL
@@ -444,12 +453,13 @@ function grade_shared_directory() {
 	    return 1
 	  fi
 
+	  printf "Your collabrative directory appearas to be setup correctly."
 	  print_PASS
 	  return 0
 	}
 
 	function grade_findfiles() {
-		  pad "Checking ${FINDDIR} has the correct files"
+		  printf "Checking ${FINDDIR} has the correct files. "
 
 		  if [ ! -d ${FINDDIR} ]; then
 		    print_FAIL
@@ -500,7 +510,7 @@ function grade_shared_directory() {
     print_FAIL
     return 1
   else
-  local facl=$(getfacl -p "$FACLONE" | "^user:"$FACLUSERONE":")
+  local facl=$(getfacl -p "$FACLONE" | grep -q "^user:"$FACLUSERONE":")
   local checkfacl="user:"$FACLUSERONE":rw"
   if ! [ "$facl" = "$checkfacl" ]; then
      printf "User $FACLUSERONE permission settings on %s are incorrect.." "$FACLONE"
@@ -570,7 +580,7 @@ function grade_shared_directory() {
 	  fi
 	}
 	function grade_vg() {
-		pad "Checking for new VG with correct PE size"
+		printf "Checking for new VG with correct PE size"
 
 	  read VG A A A A SIZE A <<< $(vgs --noheadings --units=m ${VGNAME} 2>/dev/null) &> /dev/null
 	  if [ "${VG}" != "$VGNAME" ]; then
@@ -615,19 +625,23 @@ function grade_shared_directory() {
 	    return 1
 	  fi
 	}
-##function grade_lv2() {}
-##	function grade_performance() {
-##		pad "Checking performance profile"
-##		if [[ tuned-adm current -ne "virtual-guest" ]]; then
-##			print_FAIL
-##			echo "The tuning profile should be set to virtual-guest."
-##			return 1
-##		fi
-##	}
+#function grade_lv2() {}
+	function grade_performance() {
+		printf "Checking performance profile. "
+		TUNED=$(tuned-adm active)
+		if [ "${TUNED}" = "Current active profile: virtual-guest" ]; then
+			print_PASS
+			return 0
+		else
+			print_FAIL
+			echo "The tuning profile should be set to virtual-guest."
+			return 1
+		fi
+	}
 #function grade_vdo() {}
 #function grade_stratis() {}
 	function grade_swap() {
-		pad "Checking for new swap partition"
+		printf "Checking for new swap partition"
 
 	  NUMSWAPS=$(( $(swapon -s | wc -l) - 1 ))
 	  if [ ${NUMSWAPS} -lt 1 ]; then
@@ -662,7 +676,7 @@ function grade_shared_directory() {
 	  return 0
 	}
 	function grade_nfs() {
-		pad "Checking automounted home directories"
+		printf "Checking automounted home directories "
 	  TESTUSER=production5
 	  TESTHOME=/localhome/${TESTUSER}
 	  DATA="$(su - ${TESTUSER} -c pwd 2>/dev/null)"
@@ -681,7 +695,7 @@ function grade_shared_directory() {
 	}
 
 	function grade_tar() {
-		pad "Checking for correct compressed archive"
+		printf "Checking for correct compressed archive. "
 
 	  if [ ! -f $TARFILE ]; then
 	    print_FAIL
@@ -701,7 +715,7 @@ function grade_shared_directory() {
 	}
 
 	function grade_rsync {
-	  pad "Checking for correct rsync backup"
+	  printf "Checking for correct rsync backup. "
 
 	  if [ ! -d $RSYNCDEST ]; then
 	    print_FAIL
@@ -746,22 +760,22 @@ fi
 #We should uncomment grade functions one at a time to simplify testing.
 function lab_grade() {
 	grade_hostname
-	#grade_repos
-	#grade_shared_directory
-	#grade_facl
-	#grade_rsync
+	grade_repos
+	grade_shared_directory
+	grade_facl
+	grade_rsync	
 	#grade_rootpw
 	#grade_users
-	#grade_httpd
-	#grade_tar
-	#grade_nfs
+	grade_httpd
+	grade_tar
+	grade_nfs
 	#grade_swap
 	#grade_vg
 	#grade_lv1
 	#grade_lvresize
-	#grade_findfiles
+	grade_findfiles
 	#grade_fileperms
-	#grade_performance
+	grade_performance
 }
 
 
