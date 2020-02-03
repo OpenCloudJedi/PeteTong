@@ -746,7 +746,7 @@ function grade_shared_directory() {
 ###################################################################
 
 function setup_script() {
-#	setup_servera
+	setup_servera
 	setup_serverb
 }
 
@@ -763,8 +763,8 @@ function lab_grade() {
 	grade_repos
 	grade_shared_directory
 	grade_facl
-	grade_rsync	
-	#grade_rootpw
+	grade_rsync
+	grade_rootpw
 	#grade_users
 	grade_httpd
 	grade_tar
