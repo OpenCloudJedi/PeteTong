@@ -57,12 +57,12 @@ EXISTINGMOUNTPOINT="/mountpoint"
 EXISTINGFSLOW="650"
 EXISTINGFSHIGH="750"
 VGNAME="VolGroup"
-PESIZE="16M"
+PESIZE="16"
 LVNAMEONE="lv1"
 LVSIZEONEMIN="450"
 LVSIZEONEMAX="510"
 LVMMNTONE="/mountpoint1"
-LVONETYPE="xfs"
+LVONETYPE="ext4"
 LVNAMETWO="lv2"
 SWAPPART1SIZE="+256M"
 LVPART2SIZE="+1G"
@@ -71,10 +71,9 @@ SWAPBYTELOW="500000"
 SWAPBYTEHIGH="540000"
 
 ##### Users and Groups #####
-GROUPNAME="group1"
 ARRAYUSERS=( user1 user2 user3 user4 ) #  may end up changing from array
 NEWPASS="password"
-ROOTPASS="password"
+ROOTPASS="redhat"
 #  If using a special user for facls or etc its details can be set here
 #  along with a UID for the user
 SPECIALUSR="specialuser"
@@ -101,7 +100,7 @@ HOMEDIRUSER=
 USERDIR=
 NOSHELLUSER=
 COLLABDIR="/collabdir"
-COLLABGROUP=
+COLLABGROUP="rebels"
 TARFILE="/root/tar.tar.gz"
 ORIGTARDIR="lib"  #for /var/lib This Variable works in the script if directed at the relative path
 RSYNCSRC="/boot"
@@ -258,25 +257,25 @@ function print_FAIL() {
 #function grade_networking() {}
 ####################httpd section#########
 function grade_httpd() {
-	printf "Checking Apache service and SELINUX \n"
+	printf "Checking Apache service and SELINUX. "
 	if ! getenforce | grep -q 'Enforcing'; then
     print_FAIL
-    echo " - selinux is not set to enforcing"
+    echo -e '\033[1;31m - selinux is not set to enforcing\033[0;39m'
     return 1
   fi
 	if ! systemctl status httpd.service &> /dev/null; then
     print_FAIL
-    echo " - httpd.service is not running"
+    echo -e '\033[1;31m - httpd.service is not running.\033[0;39m'
     return 1
   fi
   if ! systemctl status httpd 2> /dev/null | grep -q '^[[:space:]]*Loaded.*enabled'; then
     print_FAIL
-    echo " - httpd.service not set to be started at boot"
+    echo -e '\033[1;31m - httpd.service not set to be started at boot.\033[0;39m'
     return 1
   fi
   if ! curl -v --silent localhost:84 2>&1 | grep -q 'You got it working'; then
     print_FAIL
-    echo " - You are not serving the correct webpage"
+    echo -e '\033[1;31m - You are not serving the correct webpage.\033[0;39m'
     return 1
   fi
 	printf "The webite is serving the page correctly.  "
@@ -287,7 +286,7 @@ function grade_httpd() {
 function grade_hostname() {
 if ! hostnamectl | grep -q "${CHECKHOSTNAME}"
     	then
-		printf "The static hostname is not configured correctly "
+		echo -e '\033[1;31m - The static hostname is not configured correctly \033[0;39m'
 		print_FAIL
 		return 1
 	fi
@@ -300,13 +299,13 @@ if ! hostnamectl | grep -q "${CHECKHOSTNAME}"
 #function grade_php() {}
 #function grade_bashscript() {}
 	function grade_users() {
-		printf "Checking for correct user setup"
+		printf "Checking for correct user setup. "
 
 	  grep "${GROUPNAME}:x:*" /etc/group &>/dev/null
 	  RESULT=$?
 	  if [ "${RESULT}" -ne 0 ]; then
 	    print_FAIL
-	    echo " - The $GROUPNAME group does not exist."
+	    echo -e "\033[1;31m - The $GROUPNAME group does not exist.\033[0;39m"
 	    return 1
 	  fi
 
@@ -315,7 +314,7 @@ if ! hostnamectl | grep -q "${CHECKHOSTNAME}"
 	    RESULT=$?
 	    if [ "${RESULT}" -ne 0 ]; then
 	      print_FAIL
-	      echo " - The user $USER has not been created."
+	      echo -e "\033[1;31m - The user $USER has not been created.\033[0;39m"
 	      return 1
 	    fi
 	  done
@@ -325,7 +324,7 @@ if ! hostnamectl | grep -q "${CHECKHOSTNAME}"
 	    RESULT=$?
 	    if [ "${RESULT}" -ne 0 ]; then
 	      print_FAIL
-	      echo " - The user $USER is not in the $GROUPNAME group."
+	      echo -e "\033[1;31m - The user $USER is not in the $GROUPNAME group.\033[0;39m"
 	      return 1
 	    fi
 	  done
@@ -341,7 +340,7 @@ if ! hostnamectl | grep -q "${CHECKHOSTNAME}"
 
 	  if ! cat /etc/passwd | grep "$SPECIALUSR" | grep -q "$SUUID"; then
 	    print_FAIL
-	    echo " - The user ${SPECIALUSR}s uid is not set to $SUUID"
+	    echo -e "\033[1;31m - The user ${SPECIALUSR}s uid is not set to $SUUID \033[0;39m"
 	    return 1
 	  fi
 
@@ -353,7 +352,7 @@ if ! hostnamectl | grep -q "${CHECKHOSTNAME}"
 
 	    if [ "${FULLHASH}" != "${NEWHASH}" ]; then
 	      print_FAIL
-	      echo " - The password for user $USER is not set to ${NEWPASS}"
+	      echo -e "\033[1;31m - The password for user $USER is not set to ${NEWPASS}\033[0;39m"
 	      return 1
 	    fi
 	  done
@@ -366,10 +365,12 @@ if ! hostnamectl | grep -q "${CHECKHOSTNAME}"
 
 	    if [ "${FULLHASH}" != "${NEWHASH}" ]; then
 	      print_FAIL
-	      echo " - The password for user $USER is not set to ${SPCLPWD}"
+	      echo -e "\033[1;31m - The password for user $USER is not set to ${SPCLPWD} \033[0;39m"
 	      return 1
 	    fi
 	  done
+	  	print_PASS
+		return 0
 	}
 
 
@@ -378,16 +379,16 @@ function grade_repos() {
 	local result=$?
 
 	if [[ "${result}" -ne 0 ]]; then
-		printf "Check your BaseOS yum repository again "
 		print_FAIL
+		echo -e '\033[1;31m - Check your BaseOS yum repository again \033[0;39m'
 		return 1
 	fi
 	grep -R $YUMREPO2 /etc/yum.repos.d/ &>/dev/null
 	local result=$?
 
 	if [[ "${result}" -ne 0 ]]; then
-		printf "Check your AppStream yum repository again "
 		print_FAIL
+		echo -e '\033[1;31m - Check your AppStream yum repository again \033[0;39m'
 		return 1
 	fi
 	printf "Your repositories have been setup correctly. Both appear to work. "
@@ -396,17 +397,17 @@ function grade_repos() {
 }
 
 function grade_shared_directory() {
-	if [ $(stat -c %G "$COLLABDIR") != "$GROUPNAME" ]
+	if [ $(stat -c %G "$COLLABDIR") != "$COLLABGROUP" ]
 	then
-		printf "%s does not have correct group ownership " "$COLLABDIR"
 		print_FAIL
+		echo  -e "\033[1;31m - %s does not have correct group ownership (${COLLABGROUP}) on $COLLABDIR \033[0;39m"
 		return 1
 	fi
 
 	if [ $(stat -c %a "$COLLABDIR") -ne 2770 ]
 	then
-		printf "%s does not have correct permissions " "$COLLABDIR"
 		print_FAIL
+		echo -e "\033[1;31m %s does not have correct permissions \033[0;39m"
 		return 1
 	fi
 	printf "Your shared directory has been setup correctly with the correct ownershop and permissions."
@@ -415,88 +416,91 @@ function grade_shared_directory() {
 }
 
 	function grade_fileperms() {
-		printf "Checking permissions and ownership"
+		printf "Checking permissions and ownership.
+"
 
 	  if ! [ -d ${COLLABDIR} ]; then
 	    print_FAIL
-	    echo " - Directory ${COLLABDIR} not found"
+	    echo -e "\033[1;31m - Directory ${COLLABDIR} not found. \033[0;39m"
 	    return 1
 	  fi
 	  if ! getfacl ${COLLABDIR} 2> /dev/null | grep -q '^# owner: root$' 2> /dev/null; then
 	    print_FAIL
-	    echo " - Ownership of ${COLLABDIR} not set to 'root'"
+	    echo -e "\033[1;31m - Ownership of ${COLLABDIR} not set to 'root'. \033[0;39m"
 	    return 1
 	  fi
 	  if ! getfacl ${COLLABDIR} 2> /dev/null | grep -q "^# group: ${COLLABGROUP}$" 2> /dev/null; then
 	    print_FAIL
-	    echo " - Group ownership of ${COLLABDIR} not set to ${COLLABGROUP}"
+	    echo -e "\033[1;31m - Group ownership of ${COLLABDIR} not set to ${COLLABGROUP}\033[0;39m"
 	    return 1
 	  fi
 	  if ! getfacl ${COLLABDIR} 2> /dev/null | grep -q '^user::rwx$' 2> /dev/null; then
 	    print_FAIL
-	    echo " - User permissions not set to 'rwx' on ${COLLABDIR}"
+	    echo -e "\033[1;31m - User permissions not set to 'rwx' on ${COLLABDIR}. \033[0;39m"
 	    return 1
 	  fi
 	  if ! getfacl ${COLLABDIR} 2> /dev/null | grep -q '^group::rwx$' 2> /dev/null; then
 	    print_FAIL
-	    echo " - Group permissions not set to 'rwx' on ${COLLABDIR}"
+	    echo -e "\033[1;31m - Group permissions not set to 'rwx' on ${COLLABDIR}. \033[0;39m"
 	    return 1
 	  fi
 	  if ! getfacl ${COLLABDIR} 2> /dev/null | grep -q '^other::---$' 2> /dev/null; then
 	    print_FAIL
-	    echo " - Other permissions not set to no access on ${COLLABDIR}"
+	    echo -e "\033[1;31m - Other permissions not set to no access on ${COLLABDIR}. \033[0;39m"
 	    return 1
 	  fi
-		if ! getfacl ${COLLABDIR} 2> /dev/null | grep -q '^flags:-s-$' 2> /dev/null; then
+		if ! getfacl ${COLLABDIR} 2> /dev/null | grep -q 'flags: -s-' 2> /dev/null; then
 	    print_FAIL
-	    echo " - Special permissions (SETGID bit) not set on ${COLLABDIR}"
+	    echo -e "\033[1;31m - Special permissions (SETGID bit) not set on ${COLLABDIR}. \033[0;39m"
 	    return 1
 	  fi
 
-	  printf "Your collabrative directory appearas to be setup correctly."
+	  printf "Your collabrative directory appears to be setup correctly. "
 	  print_PASS
 	  return 0
 	}
 
 	function grade_findfiles() {
-		  printf "Checking ${FINDDIR} has the correct files. "
+		  printf "Checking ${FINDDIR} has the correct files.
+"
 
 		  if [ ! -d ${FINDDIR} ]; then
 		    print_FAIL
-		    echo "The target directory ${FINDDIR} does not exist."
+		    echo -e "\033[1;31m - The target directory ${FINDDIR} does not exist. \033[0;39m"
 		    return 1
 		  fi
 
 		  if ! ls ${FINDDIR} | grep -q "${FINDUSER}"; then
 		    print_FAIL
-		    echo "${FINDUSER}s files were not copied properly."
+		    echo -e "\033[1;31m - ${FINDUSER}s files were not copied properly. \033[0;39m"
 		    return 1
 		  fi
 
 		  if ! ls ${FINDDIR} | grep -q "${FOUNDFILE1}"; then
 		    print_FAIL
-		    echo "${FINDUSER}s files were not copied properly. Did not find ${FOUNDFILE1}"
+		    echo -e "\033[1;31m - ${FINDUSER}s files were not copied properly. Did not find ${FOUNDFILE1}. \033[0;39m"
 		    return 1
 		  fi
 
 		  if ! ls ${FINDDIR} | grep -q "${FOUNDFILE2}"; then
 		    print_FAIL
-		    echo "${FINDUSER}s files were not copied properly. Did not find ${FOUNDFILE2}"
+		    echo -e "\033[1;31m - ${FINDUSER}s files were not copied properly. Did not find ${FOUNDFILE2}. \033[0;39m"
 		    return 1
 		  fi
 
 		  if ! ls ${FINDDIR} | grep -q "${FOUNDFILE3}"; then
 		    print_FAIL
-		    echo "${FINDUSER}s files were not copied properly. Did not find ${FOUNDFILE3}"
+		    echo -e "\033[1;31m - ${FINDUSER}s files were not copied properly. Did not find ${FOUNDFILE3}. \033[0;39m"
 		    return 1
 		  fi
 
 			if ! ls ${FINDDIR} | grep -q "${FOUNDFILE4}"; then
 		    print_FAIL
-		    echo "${FINDUSER}s files were not copied properly. Did not find ${FOUNDFILE4}"
+		    echo -e "\033[1;31m - ${FINDUSER}s files were not copied properly. Did not find ${FOUNDFILE4}. \033[0;39m"
 		    return 1
 		  fi
 
+		  printf "The files appear to have been copied successfully"
 		  print_PASS
 		  return 0
 
@@ -506,47 +510,50 @@ function grade_shared_directory() {
 	function grade_facl() {
 		if [ ! -d $FACLDIRONE ]
   then
-    printf "%s does not exist " "$FACLDIRONE"
     print_FAIL
+    echo -e "\033[1;31m - %s does not exist \033[0;39m"
     return 1
   else
   local facl=$(getfacl -p "$FACLONE" | grep -q "^user:"$FACLUSERONE":")
   local checkfacl="user:"$FACLUSERONE":rw"
   if ! [ "$facl" = "$checkfacl" ]; then
-     printf "User $FACLUSERONE permission settings on %s are incorrect.." "$FACLONE"
      print_FAIL
+     echo -e "\033[1;31m - User $FACLUSERONE permission settings on %s are incorrect. \033[0;39m"
      return 1
   fi
   fi
 
 	if [ ! -d "FACLDIRTWO" ]
   then
-    printf "%s does not exist " "$FACLTWO"
     print_FAIL
+    echo -e "\033[1;31m - %s does not exist. \033[0;39m"
     return 1
   else
   local facl=$(getfacl -p "$FACLTWO" | "^user:"$FACLUSERTWO":")
   local checkfacl="user:"$FACLUSERTWO":---"
   if ! [ "$facl" = "$checkfacl" ]; then
-     printf "User $FACLUSERTWO permission settings on %s are incorrect.." "$FACLDIRTWO"
      print_FAIL
+     echo -e "\033[1;31m - User $FACLUSERTWO permission settings on %s are incorrect. \033[0;39m"
      return 1
 		 if [ ! -d "FACLDIRTWO" ]
   then
-    printf "%s does not exist " "$FACLDIRTWO"
     print_FAIL
+    echo -e "\033[1;31m - %s does not exist. \033[0;39m"
     return 1
   else
   local facl=$(getfacl -p "$FACLDIRTWO" | "^user:"$FACLUSERTWO":")
   local checkfacl="user:"$FACLUSERTWO":---"
   if ! [ "$facl" = "$checkfacl" ]; then
-     printf "User permission settings on %s are incorrect.." "$FACLTWO"
      print_FAIL
+     echo -e "\033[1;31m - User permission settings on %s are incorrect. \033[0;39m"
      return 1
   fi
   fi
   fi
   fi
+  	printf "The facls appear to have been configured correctly."
+  	print_PASS
+	return 0
 	}
 
 ##serverb grading functions
@@ -560,22 +567,26 @@ function grade_shared_directory() {
 
 	    if [ "${FULLHASH}" != "${NEWHASH}" ]; then
 	      print_FAIL
-	      echo " - The password for user $USER is not set to ${ROOTPASS}"
+	      echo -e "\033[1;31m - The password for user $USER is not set to ${ROOTPASS}. \033[0;39m"
 	      return 1
 	    fi
 	  done
+	  printf "The root password appears to be configured correctly."
+	  print_PASS
+	  return 0
 	}
 	function grade_lvresize() {
+		printf "Checking completion of Logical Volume resize. "
 		read LV VG A SIZE A <<< $(lvs --noheadings --units=m ${EXISTINGVGNAME} 2>/dev/null | grep ${EXISTINGLVNAME}) &> /dev/null
 	  if [ "${LV}" != "${EXISTINGLVNAME}" ]; then
 	    print_FAIL
-	    echo " - No LV named ${EXISTINGLVNAME} found in VG ${EXISTINGVGNAME} we may have destroyed the existing data."
+	    echo -e "\033[1;31m - No LV named ${EXISTINGLVNAME} found in VG ${EXISTINGVGNAME} we may have destroyed the existing data. \033[0;39m"
 	    return 1
 	  fi
 	  SIZE=$(echo ${SIZE} | cut -d. -f1)
 	  if  ! (( ${EXISTINGFSLOW} < ${SIZE} && ${SIZE} < ${EXISTINGFSHIGH} )); then
 	    print_FAIL
-	    echo " - Logical Volume ${EXISTINGLVNAME} is not the correct size."
+	    echo -e "\033[1;31m - Logical Volume ${EXISTINGLVNAME} is not the correct size.\033[0;39m"
 	    return 1
 	  fi
 	}
@@ -585,45 +596,51 @@ function grade_shared_directory() {
 	  read VG A A A A SIZE A <<< $(vgs --noheadings --units=m ${VGNAME} 2>/dev/null) &> /dev/null
 	  if [ "${VG}" != "$VGNAME" ]; then
 	    print_FAIL
-	    echo " - No Volume Group named ${VGNAME} found"
+	    echo -e "\033[1;31m - No Volume Group named ${VGNAME} found. \033[0;39m"
 	    return 1
 	  fi
 
 	  if ! vgdisplay ${VGNAME} | grep 'PE Size' | grep -q "${PESIZE}"; then
 	    print_FAIL
-	    echo " - Incorrect PE size on volume group $VGNAME"
+	    echo -e "\033[1;31m - Incorrect PE size on volume group $VGNAME. \033[0;39m"
 	    return 1
 	  fi
+	  	print_PASS
+               	return 0
 	}
+
 	function grade_lv1() {
+		printf "Checking the Logical Volume Setup."
 		read LV VG A SIZE A <<< $(lvs --noheadings --units=m ${VGNAME} 2>/dev/null | grep ${LVNAMEONE}) &> /dev/null
 	  if [ "${LV}" != "${LVNAMEONE}" ]; then
 	    print_FAIL
-	    echo " - No LV named ${LVNAMEONE} found in VG ${VGNAME}"
+	    echo -e "\033[1;31m - No LV named ${LVNAMEONE} found in VG ${VGNAME} \033[0;39m"
 	    return 1
 	  fi
 	  SIZE=$(echo ${SIZE} | cut -d. -f1)
 	  if  ! (( ${LVSIZEONEMIN} < ${SIZE} && ${SIZE} < ${LVSIZEONEMAX} )); then
 	    print_FAIL
-	    echo " - Logical Volume ${LVNAMEONE} is not the correct size."
+	    echo -e "\033[1;31m - Logical Volume ${LVNAMEONE} is not the correct size.\033[0;39m"
 	    return 1
 	  fi
 		read DEV TYPE MOUNTPOINT <<< $(df --output=source,fstype,target ${LVMMNTONE} 2> /dev/null | grep ${LVMMNTONE} 2> /dev/null) &> /dev/null
 	  if [ "${DEV}" != "/dev/mapper/${VGNAME}-${LVNAMEONE}" ]; then
 	    print_FAIL
-	    echo " - Wrong device mounted on ${LVMMNTONE}"
+	    echo -e "\033[1;31m - Wrong device mounted on ${LVMMNTONE}. \033[0;39m"
 	    return 1
 	  fi
 	  if [ "${TYPE}" != "${LVONETYPE}" ]; then
 	    print_FAIL
-	    echo " - Wrong file system type mounted on ${LVMMNTONE}"
+	    echo -e "\033[1;31m - Wrong file system type mounted on ${LVMMNTONE}. \033[0;39m"
 	    return 1
 	  fi
 	  if [ "${MOUNTPOINT}" != "${LVMMNTONE}" ]; then
 	    print_FAIL
-	    echo " - Wrong mountpoint"
+	    echo -e "\033[1;31m - Wrong mountpoint. \033[0;39m"
 	    return 1
 	  fi
+	  	print_PASS
+               	return 0
 	}
 #function grade_lv2() {}
 	function grade_performance() {
@@ -634,41 +651,41 @@ function grade_shared_directory() {
 			return 0
 		else
 			print_FAIL
-			echo "The tuning profile should be set to virtual-guest."
+			echo -e "\033[1;31m - The tuning profile should be set to virtual-guest.\033[0;39m"
 			return 1
 		fi
 	}
 #function grade_vdo() {}
 #function grade_stratis() {}
 	function grade_swap() {
-		printf "Checking for new swap partition"
+		printf "Checking for new swap partition. "
 
 	  NUMSWAPS=$(( $(swapon -s | wc -l) - 1 ))
 	  if [ ${NUMSWAPS} -lt 1 ]; then
 	    print_FAIL
-	    echo " - No swap partition found. Did you delete the existing?"
+	    echo -e "\033[1;31m - No swap partition found. Did you delete the existing? \033[0;39m"
 	    return 1
 	  fi
 	  if [ ${NUMSWAPS} -gt 2 ]; then
 	    print_FAIL
-	    echo " - More than 2 swap partitions  found."
+	    echo -e "\033[1;31m - More than 2 swap partitions  found. \033[0;39m"
 	    return 1
 	  fi
 
 	  read PART TYPE SIZE USED PRIO <<< $(swapon -s 2>/dev/null | tail -n1 2>/dev/null) 2>/dev/null
 	  if [ "${TYPE}" != "partition" ]; then
 	    print_FAIL
-	    echo " - Swap is not a partition."
+	    echo -e "\033[1;31m - Swap is not a partition. \033[0;39m"
 	  fi
 	  if  ! (( ${SWAPBYTELOW} < ${SIZE} && ${SIZE} < ${SWAPBYTEHIGH} )); then
 	    print_FAIL
-	    echo " - Swap is not the correct size."
+	    echo -e "\033[1;31m - Swap is not the correct size. \033[0;39m"
 	    return 1
 	  fi
 
 	  if ! grep -q 'UUID.*swap' /etc/fstab; then
 	    print_FAIL
-	    echo " - Swap isn't mounted from /etc/fstab by UUID"
+	    echo -e "\033[1;31m - Swap isn't mounted from /etc/fstab by UUID. \033[0;39m"
 	    return 1
 	  fi
 
@@ -676,18 +693,18 @@ function grade_shared_directory() {
 	  return 0
 	}
 	function grade_nfs() {
-		printf "Checking automounted home directories "
+		printf "Checking automounted home directories. "
 	  TESTUSER=production5
 	  TESTHOME=/localhome/${TESTUSER}
 	  DATA="$(su - ${TESTUSER} -c pwd 2>/dev/null)"
 	  if [ "${DATA}" != "${TESTHOME}" ]; then
 	    print_FAIL
-	    echo " - Home directory not available for ${TESTUSER}"
+	    echo -e "\033[1;31m - Home directory not available for ${TESTUSER}. \033[0;39m"
 	    return 1
 	  fi
 	  if ! mount | grep 'home-directories' | grep -q nfs; then
 	    print_FAIL
-	    echo " - ${TESTHOME} not mounted over NFS"
+	    echo -e "\033[1;31m - ${TESTHOME} not mounted over NFS. \033[0;39m"
 	    return 1
 	  fi
 	  	  print_PASS
@@ -699,7 +716,7 @@ function grade_shared_directory() {
 
 	  if [ ! -f $TARFILE ]; then
 	    print_FAIL
-	    echo " - The $TARFILE archive does not exist."
+	    echo -e "\033[1;31m - The $TARFILE archive does not exist. \033[0;39m"
 	    return 1
 	  fi
 
@@ -707,7 +724,7 @@ function grade_shared_directory() {
 	  RESULT=$?
 	  if [ "${RESULT}" -ne 0 ]; then
 	    print_FAIL
-	    echo " - The archive content is not correct."
+	    echo -e "\033[1;31m - The archive content is not correct. \033[0;39m"
 	    return 1
 	  fi
 	  print_PASS
@@ -719,7 +736,7 @@ function grade_shared_directory() {
 
 	  if [ ! -d $RSYNCDEST ]; then
 	    print_FAIL
-	    echo " - The target directory $RSYNCDEST does not exist."
+	    echo -e "\033[1;31m - The target directory $RSYNCDEST does not exist. \033[0;39m"
 	    return 1
 	  fi
 
@@ -727,7 +744,7 @@ function grade_shared_directory() {
 	  RESULT=$?
 	  if [ "${RESULT}" -ne 0 ]; then
 	    print_FAIL
-	    echo " - Directory was not rsynced properly."
+	    echo -e "\033[1;31m - Directory was not rsynced properly. \033[0;39m"
 	    return 1
 	  fi
 	  print_PASS
@@ -765,16 +782,16 @@ function lab_grade() {
 	grade_facl
 	grade_rsync
 	grade_rootpw
-	#grade_users
+	grade_users
 	grade_httpd
 	grade_tar
 	grade_nfs
-	#grade_swap
-	#grade_vg
-	#grade_lv1
-	#grade_lvresize
+	grade_swap
+	grade_vg
+	grade_lv1
+	grade_lvresize
 	grade_findfiles
-	#grade_fileperms
+	grade_fileperms
 	grade_performance
 }
 
