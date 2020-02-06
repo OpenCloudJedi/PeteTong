@@ -122,6 +122,10 @@ CHKCRONDAYS=
 DOCROOT="/test"
 
 
+##### Firewall #####
+VHOST_PORT="82"
+SSH_PORT="2222"
+
 ###################################################################
 ###################################################################
 ################# Setup functions section #########################
@@ -157,7 +161,6 @@ listen 84
 </VirtualHost>
 EOF
 wget -O /test/index.html http://cloudjedi.org/starwars.html
-systemctl restart httpd &>/dev/null;
 #Delete Repositories
 rm -f /etc/yum.repos.d/*.repo;
 #Create $FINDUSER
@@ -167,10 +170,12 @@ useradd $FINDUSER;
 echo "creating files: ${FINDFILES}"
 touch {$FINDFILES};
 #Change Ownership of those files to the $FINDOWNER
-echo "changing ownership to "${FINDUSER}" for "${FINDFILES}"";
+echo "changing ownership to ${FINDUSER} for ${FINDFILES}";
 chown $FINDUSER:$FINDUSER {$FINDFILES};
 #Create $GREPFILE
 #wget github.com/OpenCloudJedi/${GREPFILE}
+#Remove firewall rule for Cockpit
+firewall-cmd --zone=public --permanent --remove-service=cockpit;
 #Remove networking
 echo "removing network connection"
 #nmcli con delete "${SERVERACON}";
@@ -283,8 +288,8 @@ function grade_httpd() {
 	return 0
 }
 
-function grade_hostname() {
-if ! hostnamectl | grep -q "${CHECKHOSTNAME}"
+	function grade_hostname() {
+		if ! hostnamectl | grep -q "${CHECKHOSTNAME}"
     	then
 		echo -e '\033[1;31m - The static hostname is not configured correctly \033[0;39m'
 		print_FAIL
@@ -295,8 +300,49 @@ if ! hostnamectl | grep -q "${CHECKHOSTNAME}"
 	print_PASS
 	return 0
 }
-#function grade_firewalld() {}
-#function grade_php() {}
+
+	function grade_firewalld() {
+	printf "Checking firewall configuration on servera. "
+  firewall-cmd --zone=public --list-ports | grep ${VHOST_PORT}/tcp &>/dev/null
+  	RESULT=$?
+  if   [ "${RESULT}" -ne 0 ] 
+  then
+    print_FAIL
+	  echo -e "\033[1;31m - Either no firewall rule for port ${VHOST_PORT} is present, or it is misconfigured. \033[0;39m"
+    return 1
+  fi 
+	  firewall-cmd --zone=public --list-services | grep cockpit &>/dev/null
+	RESULT=$?
+	if   [ "${RESULT}" -ne 0 ]
+then
+    print_FAIL
+    return 1
+    	echo -e "\033[1;31m - Firewall rule for cockpit is not enabled. \033[0;39m"
+  fi
+	print_PASS
+	return 0	
+}
+
+	function grade_php() {
+		printf "Checking to see that PHP is installed and the correct version."
+		rpm -qi php | grep "package php is not installed" &>/dev/null
+		RESULT=$?
+          if [ "${RESULT}" -ne 1 ]; then
+		  print_FAIL
+		  echo -e "\033[1;31m - PHP does not appear to be installed. \033[0;39m"
+		return 1
+	  fi
+	  rpm -qi php | grep "Version     : 7.2.11" &>/dev/null
+	  RESULT=$?
+          if [ "${RESULT}" -ne 0 ]; then
+                  print_FAIL
+                  echo -e "\033[1;31m - PHP does not appear to be the correct version. \033[0;39m"
+                return 1
+          fi
+	  	print_PASS
+	  	return 0
+  }
+
 #function grade_bashscript() {}
 	function grade_users() {
 		printf "Checking for correct user setup. "
@@ -642,7 +688,7 @@ function grade_shared_directory() {
 	  	print_PASS
                	return 0
 	}
-#function grade_lv2() {}
+
 	function grade_performance() {
 		printf "Checking performance profile. "
 		TUNED=$(tuned-adm active)
@@ -655,8 +701,91 @@ function grade_shared_directory() {
 			return 1
 		fi
 	}
-#function grade_vdo() {}
-#function grade_stratis() {}
+
+	function grade_vdo() {
+		printf "Checking that VDO is properly configured. "
+		rpm -qi vdo | grep "package vdo is not installed" &>/dev/null
+                RESULT=$?
+        if [ "${RESULT}" -ne 1 ]; then
+                  print_FAIL
+                  echo -e "\033[1;31m - VDO does not appear to be installed. \033[0;39m"
+                return 1
+	fi
+
+	systemctl is-enabled vdo.service | grep -q "enabled"
+		RESULT=$?
+        if [ "${RESULT}" -ne 0 ]; then
+                  print_FAIL
+                  echo -e "\033[1;31m - VDO is not enabled at boot time. \033[0;39m"
+                return 1
+        fi
+	vdo list | grep -q vdokilledtheradiostar
+		RESULT=$?
+        if [ "${RESULT}" -ne 0 ]; then
+                  print_FAIL
+                  echo -e "\033[1;31m - VDO volume vdokilledtheradiostar unavailable. \033[0;39m"
+                return 1
+        fi
+	vdo status --name=vdokilledtheradiostar | grep -q "Logical size: 50G"
+		RESULT=$?
+        if [ "${RESULT}" -ne 0 ]; then
+                  print_FAIL
+                  echo -e "\033[1;31m - VDO volume vdokilledtheradiostar doesn't have a logical size of 50G. \033[0;39m"
+                return 1
+        fi
+		print_PASS
+		return 0
+}
+
+	function grade_stratis() {
+		printf "Checking that Stratis volume exists and is set to be available at boot time. "
+		rpm -qi stratisd | grep "package stratisd is not installed" &>/dev/null
+                RESULT=$?
+        if [ "${RESULT}" -ne 1 ]; then
+                  print_FAIL
+                  echo -e "\033[1;31m - stratisd does not appear to be installed. \033[0;39m"
+                return 1
+        fi
+		rpm -qi stratis-cli | grep "package stratis-cli is not installed" &>/dev/null
+                RESULT=$?
+        if [ "${RESULT}" -ne 1 ]; then
+                  print_FAIL
+                  echo -e "\033[1;31m - stratis-cli does not appear to be installed. \033[0;39m"
+                return 1
+        fi
+	systemctl is-enabled stratisd | grep -q "enabled"
+                RESULT=$?
+        if [ "${RESULT}" -ne 0 ]; then
+                  print_FAIL
+                  echo -e "\033[1;31m - stratisd service is not enabled at boot time. \033[0;39m"
+                return 1
+        fi
+
+	grep -q x-systemd.requires=stratisd.service /etc/fstab
+		RESULT=$?
+        if [ "${RESULT}" -ne 0 ]; then
+                  print_FAIL
+                  echo -e "\033[1;31m - Stratis volume missing x-systemd.requires=stratisd.service option in /etc/fstab. \033[0;39m"
+                return 1
+        fi
+	stratis pool list | grep -q StratisGenerator
+	RESULT=$?
+        if [ "${RESULT}" -ne 0 ]; then
+                  print_FAIL
+                  echo -e "\033[1;31m - Stratis pool StratisGenerator does not exist. \033[0;39m"
+                return 1
+        fi
+	stratis filesystem | grep -q Codes
+	RESULT=$?
+        if [ "${RESULT}" -ne 0 ]; then
+                  print_FAIL
+                  echo -e "\033[1;31m - Stratis filesystem called Codes was not found. \033[0;39m"
+                return 1
+        fi
+		print_PASS
+
+	}
+
 	function grade_swap() {
 		printf "Checking for new swap partition. "
 
@@ -793,6 +922,10 @@ function lab_grade() {
 	grade_findfiles
 	grade_fileperms
 	grade_performance
+	grade_firewalld
+	grade_php
+	grade_vdo
+	grade_stratis
 }
 
 
