@@ -125,7 +125,7 @@ function grade_tz {
 function grade_hostname {
   echo "Checking that hostname is set to The_Ooze persistently"
 
-  if ! hostnamectl | grep -q 'the_ooze'; then
+  if ! hostnamectl | grep -q 'The_Ooze'; then
     print_FAIL
     echo " - Static hostname not configured corrrectly."
     return 1
