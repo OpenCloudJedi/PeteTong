@@ -7,7 +7,7 @@
 PROGNAME=DarkKnight.sh
 FINDUSER="Riddler"
 FINDDIR="/root/RiddleMeThis"
-FINDFILES="/tmp/riddle,/var/log/me,/etc/this,/home/batman"
+FINDFILES="/tmp/riddle /var/log/me /etc/this /home/batman"
 FOUNDFILE1="riddle"
 FOUNDFILE2="me"
 FOUNDFILE3="this"
@@ -17,7 +17,7 @@ HEROGROUPNAME="Heroes"
 HEROARRAYUSERS=( Batman Robin Batgirl )
 HEROPASS="IronManSucks"
 VILLAINGROUPNAME="Villains"
-VILLAINARRAYUSERS=( Joker Harley Catwoman )
+VILLAINARRAYUSERS="Joker Harley Catwoman"
 VILLAINPASS="WhySoSerious"
 RSYNCSRC1=/var/log/
 RSYNCDEST1=/Clues
@@ -77,6 +77,17 @@ print_PASS
 return 0
 }
 
+function primary_group {
+	groupid=$(grep $1 /etc/group | awk -F ":" '{print $(NF-1)}')
+        primarygroupid=$(grep $2 /etc/passwd | awk -F ":" '{print $4}')
+        if ! [ "$groupid" = "$primarygroupid" ]; then
+            print_FAIL
+	    groupname=$(echo $1 | sed "s/:/./")
+            echo " - The user $2 is not in the primary group $groupname"
+            return 1
+        fi
+}
+
 function grade_heroes() {
   printf "Checking for correct hero users and group setup. "
 
@@ -117,7 +128,7 @@ function grade_heroes() {
   for USER in ${HEROARRAYUSERS}; do
     FULLHASH=$(grep "^$USER:" /etc/shadow | cut -d: -f 2)
     SALT=$(grep "^$USER:" /etc/shadow | cut -d'$' -f3)
-    PERLCOMMAND="print crypt(\"${NEWPASS}\", \"\\\$6\\\$${SALT}\");"
+    PERLCOMMAND="print crypt(\"${HEROPASS}\", \"\\\$6\\\$${SALT}\");"
     NEWHASH=$(perl -e "${PERLCOMMAND}")
 
     if [ "${FULLHASH}" != "${NEWHASH}" ]; then
@@ -139,7 +150,7 @@ function grade_heroes() {
     echo -e "\033[1;31m - The user Batman does not have the homedirectory /home/WayneManor.\033[0;39m"
     return 1
   fi
-  grep "Batgirl:x:.*"Barbara Gordon".*" /etc/passwd &>/dev/null
+  grep "Batgirl:x:.*Barbara.*Gordon.*" /etc/passwd &>/dev/null
   RESULT=$?
   if [ "${RESULT}" -ne 0 ]; then
     print_FAIL
@@ -191,7 +202,7 @@ function grade_villains() {
   for USER in ${VILLAINARRAYUSERS}; do
     FULLHASH=$(grep "^$USER:" /etc/shadow | cut -d: -f 2)
     SALT=$(grep "^$USER:" /etc/shadow | cut -d'$' -f3)
-    PERLCOMMAND="print crypt(\"${NEWPASS}\", \"\\\$6\\\$${SALT}\");"
+    PERLCOMMAND="print crypt(\"${VILLAINPASS}\", \"\\\$6\\\$${SALT}\");"
     NEWHASH=$(perl -e "${PERLCOMMAND}")
 
     if [ "${FULLHASH}" != "${NEWHASH}" ]; then
@@ -217,6 +228,26 @@ function grade_villains() {
   fi
     print_PASS
   return 0
+}
+
+function grade_tz {
+  echo "Checking for correct time and date settings"
+
+  timedatectl | grep 'America/Phoenix' &>/dev/null
+  RESULT=$?
+  if [ "${RESULT}" -ne 0 ]; then
+    print_FAIL
+    echo " - The timezone was not set correctly."
+    return 1
+  fi
+        echo "Checking to see if the time.google.com site has been added to the chrony config"
+  if ! grep -q -v 'server.*time\.google\.com' /etc/chrony.conf; then
+    print_FAIL
+    echo " - NTP is not set to synchronize from time.google.com"
+    return 1
+  fi
+
+  print_PASS
 }
 
 function grade_rsync1() {
@@ -258,23 +289,7 @@ function grade_rsync2() {
   return 0
 }
 
-#function grade_time() {
-#  timedatectl | grep $TIMEZONE &>/dev/null
-#  RESULT=$?
-#  if [ "${RESULT}" -ne 0 ]; then
-#    print_FAIL
-#    echo -e "\033[1;31m - The timezone has not been set to Phoenix time. \033[0;39m"
-#    return 1
-#  fi
-#  grep "$TZSERVER" /etc/passwd &>/dev/null
-#  RESULT=$?
-#  if [ "${RESULT}" -ne 0 ]; then
-#    print_FAIL
-#    echo -e "\033[1;31m - The timezone has not been configured properly in /etc/chrony.conf\033[0;39m"
-#    return 1
-#  print_PASS
-#  return 0
-#
+
 function grade_grep1() {
 # Compare the two variables below using diff
   f1="/tmp/BatGrep"
@@ -315,7 +330,7 @@ function grade_grep2() {
 }
 
 function grade_Heroes_shareddir() {
-  pad "Checking for correct Heroes shared directory"
+  printf "Checking for correct Heroes shared directory"
 
   if [ ! -d /BatCave ]; then
     print_FAIL
@@ -346,7 +361,7 @@ function grade_Heroes_shareddir() {
 }
 
 function grade_Villains_shareddir() {
-  printf "Checking for correct Heroes shared directory"
+  printf "Checking for correct Villains shared directory"
 
   if [ ! -d /ArkhamAsylum ]; then
     print_FAIL
@@ -393,11 +408,11 @@ function grade_tarcompress_bzip() {
     return 1
   fi
 
-  (tar tf /root/shared_configs.tar.bz2 | grep '^share') &>/dev/null
+  (tar tf /root/shared_configs.tar.bz2 | grep 'doc') &>/dev/null
   RESULT=$?
   if [ "${RESULT}" -ne 0 ]; then
     print_FAIL
-    echo -e "\033[1;31m - The bzip2 archive does not contain /usr/share.\033[0;39m"
+    echo -e "\033[1;31m - The bzip2 archive does not contain /usr/share/doc.\033[0;39m"
     return 1
   fi
   print_PASS
@@ -523,7 +538,7 @@ function lab_grade() {
         grade_villains
         grade_rsync1
         grade_rsync2
-        grade_time
+        grade_tz
         grade_grep1
         grade_grep2
         grade_Heroes_shareddir
