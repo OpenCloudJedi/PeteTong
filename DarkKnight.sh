@@ -43,11 +43,11 @@ fi
 echo "creating user: ${FINDUSER}";
 useradd $FINDUSER;
 #Create files to be found $FINDFILES
-echo "creating files: ${FINDFILES}"
-touch {$FINDFILES};
 #Change Ownership of those files to the $FINDOWNER
-echo "changing ownership to ${FINDUSER} for ${FINDFILES}";
-chown $FINDUSER:$FINDUSER {$FINDFILES};
+for i in ${FINDFILES};do
+        touch $i;
+        chown $FINDUSER:$FINDUSER ${i};
+done
 yum install words -y &> /dev/null;
 grep 'bat' /usr/share/dict/words > /tmp/BatGrep;
 grep '^data' /usr/share/dict/linux.words > /tmp/LinuxWords;
