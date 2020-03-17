@@ -35,7 +35,7 @@ function setup() {
 printf Verifying script has not been run before
 grep 'Riddler' /etc/passwd
 RESULT=$?
-if [ "${RESULT}" -ne 0 ]; then
+if [ "${RESULT}" -ne 1 ]; then
   echo -e "\033[1;31m - The Riddler user already exists. This script must have been run before.\033[0;39m"
   return 1
 fi
@@ -219,7 +219,7 @@ function grade_villains() {
   return 0
 }
 
-function grade_rsync1 {
+function grade_rsync1() {
   printf "Checking for correct rsync backup of /var/log. "
 
   if [ ! -d $RSYNCDEST1 ]; then
@@ -238,7 +238,7 @@ function grade_rsync1 {
   print_PASS
   return 0
 }
-function grade_rsync2 {
+function grade_rsync2() {
   printf "Checking for correct rsync backup of /etc. "
 
   if [ ! -d $RSYNCDEST2 ]; then
@@ -258,23 +258,23 @@ function grade_rsync2 {
   return 0
 }
 
-function grade_time() {
-  timedatectl | grep $TIMEZONE &>/dev/null
-  RESULT=$?
-  if [ "${RESULT}" -ne 0 ]; then
-    print_FAIL
-    echo -e "\033[1;31m - The timezone has not been set to Phoenix time. \033[0;39m"
-    return 1
-  fi
-  grep "$TZSERVER" /etc/passwd &>/dev/null
-  RESULT=$?
-  if [ "${RESULT}" -ne 0 ]; then
-    print_FAIL
-    echo -e "\033[1;31m - The timezone has not been configured properly in /etc/chrony.conf\033[0;39m"
-    return 1
-  print_PASS
-  return 0
-}
+#function grade_time() {
+#  timedatectl | grep $TIMEZONE &>/dev/null
+#  RESULT=$?
+#  if [ "${RESULT}" -ne 0 ]; then
+#    print_FAIL
+#    echo -e "\033[1;31m - The timezone has not been set to Phoenix time. \033[0;39m"
+#    return 1
+#  fi
+#  grep "$TZSERVER" /etc/passwd &>/dev/null
+#  RESULT=$?
+#  if [ "${RESULT}" -ne 0 ]; then
+#    print_FAIL
+#    echo -e "\033[1;31m - The timezone has not been configured properly in /etc/chrony.conf\033[0;39m"
+#    return 1
+#  print_PASS
+#  return 0
+#
 function grade_grep1() {
 # Compare the two variables below using diff
   f1="/tmp/BatGrep"
