@@ -258,7 +258,7 @@ function grade_rsync2 {
   return 0
 }
 
-function grade_time () {
+function grade_time() {
   timedatectl | grep $TIMEZONE &>/dev/null
   RESULT=$?
   if [ "${RESULT}" -ne 0 ]; then
@@ -314,7 +314,7 @@ function grade_grep2() {
   fi
 }
 
-function grade_Heroes_shareddir {
+function grade_Heroes_shareddir() {
   pad "Checking for correct Heroes shared directory"
 
   if [ ! -d /BatCave ]; then
@@ -345,7 +345,7 @@ function grade_Heroes_shareddir {
   return 0
 }
 
-function grade_Villains_shareddir {
+function grade_Villains_shareddir() {
   printf "Checking for correct Heroes shared directory"
 
   if [ ! -d /ArkhamAsylum ]; then
@@ -376,7 +376,7 @@ function grade_Villains_shareddir {
   return 0
 }
 
-function grade_tarcompress_bzip {
+function grade_tarcompress_bzip() {
   echo "Checking for correct bzip2 compressed archive"
 
   if [ ! -f /root/shared_configs.tar.bz2 ]; then
@@ -404,7 +404,7 @@ function grade_tarcompress_bzip {
   return 0
 }
 
-function grade_tarcompress_xz {
+function grade_tarcompress_xz() {
   echo "Checking for correct xz compressed archive"
 
   if [ ! -f /root/logs.tar.xz ]; then
@@ -517,7 +517,7 @@ function grade_performance() {
 
 # Call functions
 
-function lab_grade () {
+function lab_grade() {
         grade_hostname
         grade_heroes
         grade_villains
