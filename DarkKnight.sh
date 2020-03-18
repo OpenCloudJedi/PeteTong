@@ -48,9 +48,22 @@ for i in ${FINDFILES};do
         touch $i;
         chown $FINDUSER:$FINDUSER ${i};
 done
+cat > /etc/yum.repos.d/setup.repo <<EOF
+[BASEOS]
+name=BASEOS
+baseurl=${YUMREPO1}
+enabled=1
+gpgcheck=0
+[APPSTREAM]
+name=APPSTREAM
+baseurl=${YUMREPO2}
+enabled=1
+gpgcheck=0
+EOF
 yum install words -y &> /dev/null;
 grep 'bat' /usr/share/dict/words > /tmp/BatGrep;
 grep '^data' /usr/share/dict/linux.words > /tmp/LinuxWords;
+rm -f /etc/yum.repos.d/*.repo
 }
 
 # Grading functions
