@@ -1,9 +1,99 @@
 #!/bin/bash
+########################################################
+#  Global Variables ####################################
+#  Alter these to suit your personal guide #############
+########################################################
 
-touch /etc/beenrun
+CHECKHOSTNAME="servera.lab.example.com"
+PROGNAME=$0
+SETUPLABEL="/tmp/.setuplabel"
+
+##### Network Settings #####
+CONNAME="conname"
+ORIGINALCON="Wired\ Connection\ 1"
+
+##### VG & LV #####
+EXISTINGVGNAME="Death"
+EXISTINGPESIZE="8M"
+EXISTINGLVNAME="Star"
+EXISTINGLVSIZE="400M"
+EXISTINGFSTYPE="ext4"
+EXISTINGMOUNTPOINT="/Live_Demo"
+EXISTINGFSLOW="650"
+EXISTINGFSHIGH="750"
+VGNAME="VolGroup"
+PESIZE="16"
+LVNAMEONE="lv1"
+LVSIZEONEMIN="450"
+LVSIZEONEMAX="510"
+LVMMNTONE="/mountpoint1"
+LVONETYPE="ext4"
+LVNAMETWO="lv2"
+SWAPPART1SIZE="+256M"
+LVPART2SIZE="+1G"
+LVPART3SIZE="+512M"
+SWAPBYTELOW="500000"
+SWAPBYTEHIGH="540000"
+
+##### Users and Groups #####
+ARRAYUSERS=( user1 user2 user3 user4 ) #  may end up changing from array
+NEWPASS="password"
+ROOTPASS="redhat"
+#  If using a special user for facls or etc its details can be set here
+#  along with a UID for the user
+SPECIALUSR="specialuser"
+SPCLPWD="specialpass"
+SUUID="1313"
+FINDUSER="K2SO"
+FINDDIR="/root/findfiles"
+FINDFILES="/tmp/logs,/var/log/armed,/etc/droid,/home/reprogrammed"
+FOUNDFILE1="logs"
+FOUNDFILE2="armed"
+FOUNDFILE3="droid"
+FOUNDFILE4="reprogrammed"
+
+##### Timezone #####
+TIMEZONE="America/Los_Angeles"
+TZSERVER="server classroom\.example\.com.*iburst"
+
+##### Yum #####
+YUMREPO1="baseurl.*=.*content\.example\.com\/rhel8.0\/x86_64\/dvd\/BaseOS"
+YUMREPO2="baseurl.*=.*content\.example.com\/rhel8.0\/x86_64\/dvd\/AppStream"
+
+##### Files and Directories #####
+HOMEDIRUSER=
+USERDIR=
+NOSHELLUSER=
+COLLABDIR="/collabdir"
+COLLABGROUP="rebels"
+TARFILE="/root/tar.tar.gz"
+ORIGTARDIR="lib"  #for /var/lib This Variable works in the script if directed at the relative path
+RSYNCSRC="/boot"
+RSYNCDEST="/rsync_destination"
+FACLONE="/tmp/fstab_copy"
+FACLTWO="/tmp/fstab_copy"
+FACLUSERONE="jyn"
+FACLUSERTWO="cassian"
+GREPFILESRC="/usr/share/dict/words"
+GREPFILEDEST="/root/grepfile"
+
+##### Cron #####
+CRONUSER=
+CHKCRONNUMS=
+CHKCRONDAYS=
+
+
+##### Apache #####
+DOCROOT="/test"
+
+
+##### Firewall #####
+VHOST_PORT="82"
+SSH_PORT="2222"
+
 function setup_servera() {
 #Install Apache
-ssh root@servera "yum install httpd -y;
+ssh root@servera "yum install httpd -y &>/dev/null;
 #Create VirtualHost for port 84 with DocumentRoot outside of /var/www/html
 cat > /etc/httpd/conf.d/servera.conf << EOF
 listen 84
@@ -14,17 +104,18 @@ listen 84
 	ErrorLog	logs/localhost.error.log
 </VirtualHost>
 EOF
-wget -O /test/index.html http://cloudjedi.org/starwars.html
+mkdir /test
+wget -O /test/index.html http://cloudjedi.org/starwars.html &>/dev/null
 #Delete Repositories
 rm -f /etc/yum.repos.d/*.repo;
 #Create $FINDUSER
 echo "creating user: ${FINDUSER}";
 useradd $FINDUSER;
 #Create files to be found $FINDFILES
-echo "creating files: ${FINDFILES}"
+echo "creating files for $FINDUSER"
 touch {$FINDFILES};
 #Change Ownership of those files to the $FINDOWNER
-echo "changing ownership to ${FINDUSER} for ${FINDFILES}";
+echo "changing ownership to ${FINDUSER} ";
 chown $FINDUSER:$FINDUSER {$FINDFILES};
 #Create $GREPFILE
 #wget github.com/OpenCloudJedi/${GREPFILE}
@@ -45,57 +136,59 @@ function setup_serverb() {
 ssh root@serverb "
 head -c 32 /dev/urandom | passwd --stdin root;
 head -c 32 /dev/urandom | passwd --stdin student;
-cat <<- FDISKCMD | fdisk /dev/vdb &>/dev/null
-	n
-	p
-	1
-
-	${SWAPPART1SIZE}
-	t
-	1
-	82
-	n
-	p
-	2
-
-	${LVPART2SIZE}
-	t
-	2
-	8e
-	n
-	p
-	3
-
-	${LVPART3SIZE}
-	t
-	3
-	8e
-	w
-	FDISKCMD
+echo 'fdisk -u  /dev/vdb <<EOF' >> /root/part;
+echo 'n' >> /root/part;
+echo 'p' >> /root/part;
+echo '1' >> /root/part;
+echo '' >> /root/part;
+echo '+256M' >> /root/part;
+echo 'n' >> /root/part;
+echo 'p' >> /root/part;
+echo '2' >> /root/part;
+echo '' >> /root/part;
+echo '+256M' >> /root/part;
+echo 'n' >> /root/part;
+echo 'p' >> /root/part;
+echo '3' >> /root/part;
+echo '' >> /root/part;
+echo '+256M' >> /root/part;
+echo 'w' >> /root/part;
+echo 'EOF' >> /root/part;
+chmod +x /root/part;
+bash /root/part;
 partprobe;
 #Create existing swap
-mkswap /dev/vdb1;
+mkswap /dev/vdb1 &>/dev/null;
 #Create VG and set PE size
-pvcreate /dev/vdb2 /dev/vdb3
-vgcreate -s $EXISTINGPESIZE $EXISTINGVGNAME /dev/vdb2 /dev/vdb3;
+pvcreate /dev/vdb2 /dev/vdb3 &>/dev/null
+vgcreate -s $EXISTINGPESIZE $EXISTINGVGNAME /dev/vdb2 /dev/vdb3 &>/dev/null;
 #Create LV
-lvcreate -n $EXISTINGLVNAME -L $EXISTINGLVSIZE $EXISTINGVGNAME;
+lvcreate -n $EXISTINGLVNAME -L $EXISTINGLVSIZE $EXISTINGVGNAME &>/dev/null;
 #Create FileSystem
-mkfs -t $EXISTINGFSTYPE /dev/${EXISTINGVGNAME}/${EXISTINGLVNAME};
+mkfs -t $EXISTINGFSTYPE /dev/${EXISTINGVGNAME}/${EXISTINGLVNAME} &>/dev/null;
 #Add to /etc/fstab
 echo '/dev/$EXISTINGVGNAME/$EXISTINGLVNAME $EXISTINGMOUNTPOINT $EXISTINGFSTYPE defaults 0 0' >> /etc/fstab;
 echo '/dev/vdb1 swap swap defaults 0 0' >> /etc/fstab;
 mkdir ${EXISTINGMOUNTPOINT}
+swapon -a;
+mount -a;
 #Change performance profile from default to anything else...
 tuned-adm profile throughput-performance;
 #Install autofs, but do not enable
-yum install autofs -y;
+yum install autofs -y &>/dev/null;
 #Extend grub timeout
 #Fix grub
 sed -i s/TIMEOUT=1/TIMEOUT=20/g /etc/default/grub ;
 grub2-mkconfig -o /boot/grub2/grub.cfg;"
 }
 
-if [[ -f /etc/beenrun  ]]; then
-  #statements
+######################################################
+###Run functions#############
+setup_servera
+setup_serverb
+grep -q empire /etc/hosts 
+if [ $? = 1 ]; then
+	sudo echo "172.25.250.10 empire.lab.example.com" >> /etc/hosts;
+	sudo echo "172.25.250.11 rebels.lab.example.com" >> /etc/hosts;
 fi
+echo "The setup script is finished. You may login to servera annd serverb to begin your work."
