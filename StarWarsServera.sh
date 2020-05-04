@@ -455,7 +455,6 @@ function grade_shared_directory() {
   	grade_repos
   	grade_shared_directory
   	grade_facl
-  	grade_rsync
   	grade_users
   	grade_httpd
   	grade_tar
