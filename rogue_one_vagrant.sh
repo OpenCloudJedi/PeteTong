@@ -4,7 +4,7 @@
 #  Alter these to suit your personal guide #############
 ########################################################
 
-CHECKHOSTNAME="servera.lab.example.com"
+CHECKHOSTNAME="server1.eight.example.com"
 PROGNAME=$0
 SETUPLABEL="/tmp/.setuplabel"
 
@@ -93,7 +93,19 @@ SSH_PORT="2222"
 
 function setup_servera() {
 #Install Apache
-ssh vagrant@server1.eight.example.com "sudo yum install httpd -y &>/dev/null;
+ssh vagrant@server1.eight.example.com "cat > /etc/yum.repos.d/building.repo << EOF
+[BaseOS]
+name=BaseOS
+baseurl=http://repo.eight.example.com/BaseOS
+enabled=1
+gpgcheck=0
+[AppStream]
+name=AppStream
+baseurl=http://repo.eight.example.com/AppStream
+enabled=1
+gpgcheck=0
+EOF
+sudo yum install httpd -y &>/dev/null;
 #Create VirtualHost for port 84 with DocumentRoot outside of /var/www/html
 cat > /etc/httpd/conf.d/servera.conf << EOF
 listen 84
@@ -107,7 +119,7 @@ EOF
 sudo mkdir /test
 wget -O /test/index.html http://cloudjedi.org/starwars.html &>/dev/null
 #Delete Repositories
-#rm -f /etc/yum.repos.d/*.repo;
+rm -f /etc/yum.repos.d/*.repo;
 #Create $FINDUSER
 echo "creating user: ${FINDUSER}";
 useradd $FINDUSER;
@@ -122,7 +134,7 @@ chown $FINDUSER:$FINDUSER {$FINDFILES};
 #Remove firewall rule for Cockpit
 firewall-cmd --zone=public --permanent --remove-service=cockpit;
 #Remove networking
-echo "removing network connection"
+#echo "removing network connection"
 #nmcli con delete "${SERVERACON}";
 "
 }
@@ -135,7 +147,7 @@ function setup_serverb() {
 #Lockout users
 ssh vagrant@server2.eight.example.com "
 sudo head -c 32 /dev/urandom | passwd --stdin root;
-sudo head -c 32 /dev/urandom | passwd --stdin student;
+sudo head -c 32 /dev/urandom | passwd --stdin vagrant;
 sudo echo 'fdisk -u  /dev/vdb <<EOF' >> /root/part;
 sudo echo 'n' >> /root/part;
 sudo echo 'p' >> /root/part;
