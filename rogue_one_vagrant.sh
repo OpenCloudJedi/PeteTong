@@ -204,7 +204,7 @@ setup_servera
 setup_serverb
 grep -q empire /etc/hosts
 if [ $? = 1 ]; then
-	echo "172.25.250.10 empire.lab.example.com" | tee -a /etc/hosts;
-	echo "172.25.250.11 rebels.lab.example.com" | tee -a /etc/hosts;
+	echo "172.25.250.10 empire.lab.example.com" | sudo tee -a /etc/hosts;
+	echo "172.25.250.11 rebels.lab.example.com" | sudo tee -a /etc/hosts;
 fi
 echo "The setup script is finished. You may login to servera annd serverb to begin your work."
