@@ -13,44 +13,31 @@ CONNAME="conname"
 ORIGINALCON="Wired\ Connection\ 1"
 
 ##### VG & LV #####
-EXISTINGVGNAME="existingvg01"
+EXISTINGVGNAME="Death"
 EXISTINGPESIZE="8M"
-EXISTINGLVNAME="existinglv01"
+EXISTINGLVNAME="Star"
 EXISTINGLVSIZE="400M"
 EXISTINGFSTYPE="ext4"
 EXISTINGMOUNTPOINT="/mountpoint"
-EXISTINGFSLOW="650"
-EXISTINGFSHIGH="750"
-VGNAME="VolGroup"
-PESIZE="16"
-LVNAMEONE="lv1"
+EXISTINGFSLOW="1700"
+EXISTINGFSHIGH="1800"
+VGNAME="Shield"
+PESIZE="8"
+LVNAMEONE="Generator"
 LVSIZEONEMIN="450"
 LVSIZEONEMAX="510"
-LVMMNTONE="/mountpoint1"
-LVONETYPE="ext4"
+LVMMNTONE="/Down"
+LVONETYPE="xfs"
 LVNAMETWO="lv2"
 SWAPPART1SIZE="+256M"
 LVPART2SIZE="+1G"
 LVPART3SIZE="+512M"
-SWAPBYTELOW="500000"
-SWAPBYTEHIGH="540000"
+SWAPBYTELOW="210000"
+SWAPBYTEHIGH="300000"
 
 ##### Users and Groups #####
-ARRAYUSERS=( user1 user2 user3 user4 ) #  may end up changing from array
-NEWPASS="password"
-ROOTPASS="redhat"
-#  If using a special user for facls or etc its details can be set here
-#  along with a UID for the user
-SPECIALUSR="specialuser"
-SPCLPWD="specialpass"
-SUUID="1313"
-FINDUSER="finduser"
-FINDDIR="/root/findfiles"
-FINDFILES="/tmp/findfile1,/var/log/findfile2,/etc/findfile3,/home/findfile4"
-FOUNDFILE1="findfile1"
-FOUNDFILE2="findfile2"
-FOUNDFILE3="findfile3"
-FOUNDFILE4="findfile4"
+NEWPASS="hopeful"
+ROOTPASS="hopeful"
 
 ##### Timezone #####
 TIMEZONE="America/Los_Angeles"
@@ -58,10 +45,10 @@ TZSERVER="server classroom\.example\.com.*iburst"
 
 
 ##### Files and Directories #####
-TARFILE="/root/tar.tar.gz"
+TARFILE="/root/libraries.tar.bz2"
 ORIGTARDIR="lib"  #for /var/lib This Variable works in the script if directed at the relative path
-RSYNCSRC="/boot"
-RSYNCDEST="/rsync_destination"
+RSYNCSRC="/usr/share/icons/"
+RSYNCDEST="/ShareAlike"
 GREPFILESRC="/usr/share/dict/words"
 GREPFILEDEST="/root/grepfile"
 
@@ -76,7 +63,7 @@ function print_FAIL() {
 
 function install_perl() {
     #perl is installed to support password grading functions.
-    yum install perl -y &> /dev/null
+    yum install perl -y 
 }
 
 function grade_rootpw() {
@@ -298,8 +285,8 @@ function grade_swap() {
 }
 function grade_nfs() {
   printf "Checking automounted home directories. "
-  TESTUSER=production5
-  TESTHOME=/localhome/${TESTUSER}
+  TESTUSER=remoteuser
+  TESTHOME=/home-directories/${TESTUSER}
   DATA="$(su - ${TESTUSER} -c pwd 2>/dev/null)"
   if [ "${DATA}" != "${TESTHOME}" ]; then
     print_FAIL
@@ -365,8 +352,8 @@ function lab_grade() {
 	grade_vg
 	grade_lv1
 	grade_lvresize
-	grade_findfiles
 	grade_performance
 	grade_vdo
 	grade_stratis
 }
+lab_grade
