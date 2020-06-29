@@ -111,6 +111,7 @@ mkdir /test
 wget -O /test/index.html http://cloudjedi.org/starwars.html &>/dev/null
 #Delete Repositories
 rm -f /etc/yum.repos.d/*.repo;
+yum remove vim -y
 #Create $FINDUSER
 echo "creating user: ${FINDUSER}";
 useradd $FINDUSER;
