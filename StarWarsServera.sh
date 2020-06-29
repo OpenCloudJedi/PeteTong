@@ -8,7 +8,7 @@
 #  Alter these to suit your personal guide #############
 ########################################################
 
-CHECKHOSTNAME="servera.lab.example.com"
+CHECKHOSTNAME="empire.lab.example.com"
 PROGNAME=$0
 SETUPLABEL="/tmp/.setuplabel"
 
@@ -17,12 +17,12 @@ CONNAME="conname"
 ORIGINALCON="Wired\ Connection\ 1"
 
 ##### VG & LV #####
-EXISTINGVGNAME="existingvg01"
+EXISTINGVGNAME="Death"
 EXISTINGPESIZE="8M"
-EXISTINGLVNAME="existinglv01"
-EXISTINGLVSIZE="400M"
+EXISTINGLVNAME="Star"
+EXISTINGLVSIZE="480M"
 EXISTINGFSTYPE="ext4"
-EXISTINGMOUNTPOINT="/mountpoint"
+EXISTINGMOUNTPOINT="/Live_Demo"
 EXISTINGFSLOW="650"
 EXISTINGFSHIGH="750"
 VGNAME="VolGroup"
@@ -40,24 +40,24 @@ SWAPBYTELOW="500000"
 SWAPBYTEHIGH="540000"
 
 ##### Users and Groups #####
-ARRAYUSERS=( user1 user2 user3 user4 ) #  may end up changing from array
-NEWPASS="password"
+ARRAYUSERS=( jyn cassian ) #  may end up changing from array
+NEWPASS="hopeful"
 ROOTPASS="redhat"
 #  If using a special user for facls or etc its details can be set here
 #  along with a UID for the user
-SPECIALUSR="specialuser"
-SPCLPWD="specialpass"
+SPECIALUSR="chirrut"
+SPCLPWD="hopeful"
 SUUID="1313"
-FINDUSER="finduser"
-FINDDIR="/root/findfiles"
-FINDFILES="/tmp/findfile1,/var/log/findfile2,/etc/findfile3,/home/findfile4"
-FOUNDFILE1="findfile1"
-FOUNDFILE2="findfile2"
-FOUNDFILE3="findfile3"
-FOUNDFILE4="findfile4"
+FINDUSER="K2SO"
+FINDDIR="/root/CalculatedRisk"
+FINDFILES="/tmp/logs,/var/log/armed,/etc/droid,/home/reprogrammed"
+FOUNDFILE1="logs"
+FOUNDFILE2="armed"
+FOUNDFILE3="droid"
+FOUNDFILE4="reprogrammed"
 
 ##### Timezone #####
-TIMEZONE="America/Los_Angeles"
+TIMEZONE="America/Jamaica"
 TZSERVER="server classroom\.example\.com.*iburst"
 
 ##### Yum #####
@@ -68,7 +68,7 @@ YUMREPO2="baseurl.*=.*content\.example.com\/rhel8.0\/x86_64\/dvd\/AppStream"
 HOMEDIRUSER=
 USERDIR=
 NOSHELLUSER=
-COLLABDIR="/collabdir"
+COLLABDIR="/resistance"
 COLLABGROUP="rebels"
 TARFILE="/root/tar.tar.gz"
 ORIGTARDIR="lib"  #for /var/lib This Variable works in the script if directed at the relative path
@@ -87,7 +87,7 @@ DOCROOT="/test"
 
 
 ##### Firewall #####
-VHOST_PORT="82"
+VHOST_PORT="84"
 SSH_PORT="2222"
 
 #  Colored PASS and FAIL for grading
@@ -169,15 +169,15 @@ then
 }
 
 	function grade_php() {
-		printf "Checking to see that PHP is installed and the correct version."
-		rpm -qi php | grep "package php is not installed" &>/dev/null
+		printf "Checking to see that PHP is installed and the correct version. "
+		grep memory_limit /etc/php.ini  &>/dev/null
 		RESULT=$?
-          if [ "${RESULT}" -ne 1 ]; then
+          if [ "${RESULT}" -ne 0 ]; then
 		  print_FAIL
-		  echo -e "\033[1;31m - PHP does not appear to be installed. \033[0;39m"
+		  echo -e "\033[1;31m - PHP does not appear to be installed because there was no php.ini file. \033[0;39m"
 		return 1
 	  fi
-	  rpm -qi php | grep "Version     : 7.2.11" &>/dev/null
+	  dnf history info php | grep "php-cli-7.2" &>/dev/null
 	  RESULT=$?
           if [ "${RESULT}" -ne 0 ]; then
                   print_FAIL
@@ -399,44 +399,44 @@ function grade_shared_directory() {
 #function grade_grep() {}
 
 	function grade_facl() {
-		if [ ! -d $FACLDIRONE ]
+		if [ ! -f $FACLONE ]
   then
     print_FAIL
     echo -e "\033[1;31m - %s does not exist \033[0;39m"
     return 1
   else
-  local facl=$(getfacl -p "$FACLONE" | grep -q "^user:"$FACLUSERONE":")
-  local checkfacl="user:"$FACLUSERONE":rw"
+  local facl=$(getfacl -p /tmp/fstab_copy | grep user:jyn:rw-)
+  local checkfacl="user:"$FACLUSERONE":rw-"
   if ! [ "$facl" = "$checkfacl" ]; then
      print_FAIL
-     echo -e "\033[1;31m - User $FACLUSERONE permission settings on %s are incorrect. \033[0;39m"
+     echo -e "\033[1;31m - User $FACLUSERONE permission settings on $FACLONE are incorrect. \033[0;39m"
      return 1
   fi
   fi
 
-	if [ ! -d "FACLDIRTWO" ]
+	if [ ! -f "$FACLTWO" ]
   then
     print_FAIL
-    echo -e "\033[1;31m - %s does not exist. \033[0;39m"
+    echo -e "\033[1;31m - $FACLTWO does not exist. \033[0;39m"
+    return 1
+  else
+  local facl=$(getfacl -p "$FACLTWO" | grep "^user:"$FACLUSERTWO":---")
+  local checkfacl="user:"$FACLUSERTWO":---"
+  if ! [ "$facl" = "$checkfacl" ]; then
+     print_FAIL
+     echo -e "\033[1;31m - User $FACLUSERTWO permission settings on $FACLTWO are incorrect. \033[0;39m"
+     return 1
+		 if [ ! -f "$FACLTWO" ]
+  then
+    print_FAIL
+    echo -e "\033[1;31m - $FACLTWO does not exist. \033[0;39m"
     return 1
   else
   local facl=$(getfacl -p "$FACLTWO" | "^user:"$FACLUSERTWO":")
   local checkfacl="user:"$FACLUSERTWO":---"
   if ! [ "$facl" = "$checkfacl" ]; then
      print_FAIL
-     echo -e "\033[1;31m - User $FACLUSERTWO permission settings on %s are incorrect. \033[0;39m"
-     return 1
-		 if [ ! -d "FACLDIRTWO" ]
-  then
-    print_FAIL
-    echo -e "\033[1;31m - %s does not exist. \033[0;39m"
-    return 1
-  else
-  local facl=$(getfacl -p "$FACLDIRTWO" | "^user:"$FACLUSERTWO":")
-  local checkfacl="user:"$FACLUSERTWO":---"
-  if ! [ "$facl" = "$checkfacl" ]; then
-     print_FAIL
-     echo -e "\033[1;31m - User permission settings on %s are incorrect. \033[0;39m"
+     echo -e "\033[1;31m - $FACLUSERTWO permission settings on $FACLTWO are incorrect. \033[0;39m"
      return 1
   fi
   fi
@@ -447,6 +447,26 @@ function grade_shared_directory() {
 	return 0
 	}
 
+
+	function grade_tz {
+  echo "Checking for correct time and date settings"
+
+  timedatectl | grep 'America/Jamaica' &>/dev/null
+  RESULT=$?
+  if [ "${RESULT}" -ne 0 ]; then
+    print_FAIL
+    echo " - The timezone was not set correctly."
+    return 1
+  fi
+        echo "Checking to see if the time.google.com site has been added to the chrony config"
+  if ! grep -q -v 'server.*classroom\.example\.com.*' /etc/chrony.conf; then
+    print_FAIL
+    echo " - NTP is not set to synchronize from time.google.com"
+    return 1
+  fi
+
+  print_PASS
+}
   #############################
   #######calling all functions######
   function lab_grade() {
@@ -457,7 +477,7 @@ function grade_shared_directory() {
   	grade_facl
   	grade_users
   	grade_httpd
-  	grade_tar
+  #	grade_tar
   	grade_findfiles
   	grade_fileperms
   	grade_firewalld
