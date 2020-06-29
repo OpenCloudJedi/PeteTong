@@ -4,7 +4,6 @@
 #  Alter these to suit your personal guide #############
 ########################################################
 
-CHECKHOSTNAME="servera.lab.example.com"
 PROGNAME=$0
 SETUPLABEL="/tmp/.setuplabel"
 
@@ -36,14 +35,9 @@ SWAPBYTELOW="500000"
 SWAPBYTEHIGH="540000"
 
 ##### Users and Groups #####
-ARRAYUSERS=( user1 user2 user3 user4 ) #  may end up changing from array
-NEWPASS="password"
 ROOTPASS="redhat"
 #  If using a special user for facls or etc its details can be set here
 #  along with a UID for the user
-SPECIALUSR="specialuser"
-SPCLPWD="specialpass"
-SUUID="1313"
 FINDUSER="K2SO"
 FINDDIR="/root/findfiles"
 FINDFILES="/tmp/logs,/var/log/armed,/etc/droid,/home/reprogrammed"
@@ -61,9 +55,6 @@ YUMREPO1="baseurl.*=.*content\.example\.com\/rhel8.0\/x86_64\/dvd\/BaseOS"
 YUMREPO2="baseurl.*=.*content\.example.com\/rhel8.0\/x86_64\/dvd\/AppStream"
 
 ##### Files and Directories #####
-HOMEDIRUSER=
-USERDIR=
-NOSHELLUSER=
 COLLABDIR="/collabdir"
 COLLABGROUP="rebels"
 TARFILE="/root/tar.tar.gz"
@@ -77,10 +68,6 @@ FACLUSERTWO="cassian"
 GREPFILESRC="/usr/share/dict/words"
 GREPFILEDEST="/root/grepfile"
 
-##### Cron #####
-CRONUSER=
-CHKCRONNUMS=
-CHKCRONDAYS=
 
 
 ##### Apache #####
@@ -88,10 +75,11 @@ DOCROOT="/test"
 
 
 ##### Firewall #####
-VHOST_PORT="82"
+VHOST_PORT="84"
 SSH_PORT="2222"
 
 function setup_servera() {
+echo "Setting up servera"
 #Install Apache
 ssh root@servera "yum install httpd -y &>/dev/null;
 #Create VirtualHost for port 84 with DocumentRoot outside of /var/www/html
@@ -99,24 +87,37 @@ cat > /etc/httpd/conf.d/servera.conf << EOF
 listen 84
 <VirtualHost *:84>
 	ServerName	localhost
+	ServerAlias	servera.lab.example.com
 	DocumentRoot	$DOCROOT
 	CustomLog	logs/localhost.access.log combined
 	ErrorLog	logs/localhost.error.log
 </VirtualHost>
-<Directory /test>
-	require all granted
+<Directory $DOCROOT>
+	Require all granted
 </Directory>
 EOF
 mkdir /test
-wget -O /test/index.html http://cloudjedi.org/starwars.html &>/dev/null
+cat > /test/index.html << EOF
+You got it working! The force must be <b>strong</b> with you.
+EOF
+mkdir -p /home-directories/remoteuser;
+chmod 777  /home-directories/remoteuser;
+chmod 777  /home-directories/;
+setsebool -P use_nfs_home_dirs 1;
+cat >> /etc/exports << EOF
+/home-directories/remoteuser	*(rw,sync)
+EOF
+systemctl enable nfs-server.service --now;
+exportfs;
+firewall-cmd --add-service=nfs;
+firewall-cmd --add-service=nfs --permanent;
 #Delete Repositories
 rm -f /etc/yum.repos.d/*.repo;
-yum remove vim -y
 #Create $FINDUSER
 echo "creating user: ${FINDUSER}";
 useradd $FINDUSER;
 #Create files to be found $FINDFILES
-echo "creating files for $FINDUSER"
+echo "creating files belonging to $FINDUSER"
 touch {$FINDFILES};
 #Change Ownership of those files to the $FINDOWNER
 echo "changing ownership to ${FINDUSER} ";
@@ -127,7 +128,7 @@ chown $FINDUSER:$FINDUSER {$FINDFILES};
 firewall-cmd --zone=public --permanent --remove-service=cockpit;
 #Remove networking
 echo "removing network connection"
-#nmcli con delete "${SERVERACON}";
+#nmcli con mod "Wired Connection 1" ipv4.method manual "${SERVERACON}";
 "
 }
 ##^^^ still need to figure out how to keep this network delete from hanging
@@ -140,6 +141,7 @@ function setup_serverb() {
 ssh root@serverb "
 head -c 32 /dev/urandom | passwd --stdin root;
 head -c 32 /dev/urandom | passwd --stdin student;
+useradd -M -d /home-directories/remoteuser remoteuser;
 echo 'fdisk -u  /dev/vdb <<EOF' >> /root/part;
 echo 'n' >> /root/part;
 echo 'p' >> /root/part;
@@ -183,13 +185,32 @@ yum install autofs -y &>/dev/null;
 #Extend grub timeout
 #Fix grub
 sed -i s/TIMEOUT=1/TIMEOUT=20/g /etc/default/grub ;
-grub2-mkconfig -o /boot/grub2/grub.cfg;"
+grub2-mkconfig > /boot/grub2/grub.cfg;
+	"
 }
 
+function drop_networking() {
+	ssh root@servera "echo 'nmcli connection edit <<EOF' >> /root/info;
+        echo 'ethernet' >> /root/info;
+        echo 'goto ipv4' >> /root/info;
+        echo 'set addresses 172.25.250.66/24' >> /root/info;
+        echo 'set dns 172.25.250.254' >> /root/info;
+        echo 'set gateway 172.25.250.254' >> /root/info;
+        echo 'set method manual' >> /root/info;
+        echo 'save' >> /root/info;
+        echo 'yes' >> /root/info;
+        echo 'quit' >> /root/info;
+        chmod +x /root/info;
+        bash /root/info 2>/dev/null;
+        EOF
+	echo "rebooting servera now"
+	reboot"
+}
 ######################################################
 ###Run functions#############
 setup_servera
 setup_serverb
+drop_networking
 grep -q empire /etc/hosts 
 if [ $? = 1 ]; then
 	sudo echo "172.25.250.10 empire.lab.example.com" >> /etc/hosts;
