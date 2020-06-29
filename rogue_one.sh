@@ -103,6 +103,9 @@ listen 84
 	CustomLog	logs/localhost.access.log combined
 	ErrorLog	logs/localhost.error.log
 </VirtualHost>
+<Directory /test>
+	require all granted
+</Directory>
 EOF
 mkdir /test
 wget -O /test/index.html http://cloudjedi.org/starwars.html &>/dev/null
