@@ -101,7 +101,21 @@ listen 84
 	CustomLog	logs/localhost.access.log combined
 	ErrorLog	logs/localhost.error.log
 </VirtualHost>
+<Directory ${DOCROOT}
+	Require all granted
+</Directory>
 EOF
+mkdir -p /hung_hat/drifter;
+chmod 777  /hung_hat/drifter;
+chmod 777  /hung_hat/;
+setsebool -P use_nfs_home_dirs 1;
+cat >> /etc/exports << EOF
+/hung_hat/drifter	*(rw,sync)
+EOF
+systemctl enable nfs-server.service --now;
+exportfs;
+firewall-cmd --add-service=nfs;
+firewall-cmd --add-service=nfs --permanent;
 sudo sed -i s/=permissive/=enforcing/g /etc/selinux/config;
 sudo setenforce 1;
 sudo cp /home/vagrant/servera.conf /etc/httpd/conf.d/server1.conf
@@ -114,7 +128,7 @@ echo "creating user: ${FINDUSER}";
 sudo useradd $FINDUSER;
 #Create files to be found $FINDFILES
 echo "creating files for $FINDUSER"
-sudo touch {$FINDFILES};
+sudo touch ${FINDFILES};
 #Change Ownership of those files to the $FINDOWNER
 echo "changing ownership to ${FINDUSER} ";
 sudo chown $FINDUSER:$FINDUSER ${FINDFILES};
@@ -135,8 +149,8 @@ sudo firewall-cmd --zone=public --permanent --remove-service=cockpit;
 function setup_serverb() {
 #Lockout users
 ssh vagrant@server2.eight.example.com "
-sudo head -c 32 /dev/urandom | passwd --stdin root;
-sudo head -c 32 /dev/urandom | passwd --stdin vagrant;
+sudo head -c 32 /dev/urandom | sudo passwd --stdin root;
+sudo head -c 32 /dev/urandom | sudo passwd --stdin vagrant;
 echo 'fdisk -u  /dev/sdb <<EOF' >> /home/vagrant/part;
 echo 'n' >> /home/vagrant/part;
 echo 'p' >> /home/vagrant/part;
