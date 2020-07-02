@@ -105,17 +105,17 @@ listen 84
 	Require all granted
 </Directory>
 EOF
-mkdir -p /hung_hat/drifter;
-chmod 777  /hung_hat/drifter;
-chmod 777  /hung_hat/;
-setsebool -P use_nfs_home_dirs 1;
-cat >> /etc/exports << EOF
+sudo mkdir -p /hung_hat/drifter;
+sudo chmod 777  /hung_hat/drifter;
+sudo chmod 777  /hung_hat/;
+sudo setsebool -P use_nfs_home_dirs 1;
+sudo cat >> /etc/exports << EOF
 /hung_hat/drifter	*(rw,sync)
 EOF
-systemctl enable nfs-server.service --now;
-exportfs;
-firewall-cmd --add-service=nfs;
-firewall-cmd --add-service=nfs --permanent;
+sudo systemctl enable nfs-server.service --now;
+sudo exportfs;
+sudo firewall-cmd --add-service=nfs;
+sudo firewall-cmd --add-service=nfs --permanent;
 sudo sed -i s/=permissive/=enforcing/g /etc/selinux/config;
 sudo setenforce 1;
 sudo cp /home/vagrant/servera.conf /etc/httpd/conf.d/server1.conf
@@ -151,6 +151,7 @@ function setup_serverb() {
 ssh vagrant@server2.eight.example.com "
 sudo head -c 32 /dev/urandom | sudo passwd --stdin root;
 sudo head -c 32 /dev/urandom | sudo passwd --stdin vagrant;
+useradd -M -d /hung_hat/drifter drifter;
 echo 'fdisk -u  /dev/sdb <<EOF' >> /home/vagrant/part;
 echo 'n' >> /home/vagrant/part;
 echo 'p' >> /home/vagrant/part;
