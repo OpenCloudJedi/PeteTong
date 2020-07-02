@@ -13,25 +13,15 @@ CONNAME="conname"
 ORIGINALCON="Wired\ Connection\ 1"
 
 ##### VG & LV #####
-EXISTINGVGNAME="Death"
+EXISTINGVGNAME="Plot"
 EXISTINGPESIZE="8M"
-EXISTINGLVNAME="Star"
-EXISTINGLVSIZE="400M"
-EXISTINGFSTYPE="ext4"
-EXISTINGMOUNTPOINT="/Live_Demo"
+EXISTINGLVNAME="Thickens"
+EXISTINGLVSIZE="256M"
+EXISTINGFSTYPE="xfs"
+EXISTINGMOUNTPOINT="/TwistAtEnd"
 EXISTINGFSLOW="650"
 EXISTINGFSHIGH="750"
-VGNAME="VolGroup"
-PESIZE="16"
-LVNAMEONE="lv1"
-LVSIZEONEMIN="450"
-LVSIZEONEMAX="510"
-LVMMNTONE="/mountpoint1"
-LVONETYPE="ext4"
-LVNAMETWO="lv2"
 SWAPPART1SIZE="+256M"
-LVPART2SIZE="+1G"
-LVPART3SIZE="+512M"
 SWAPBYTELOW="500000"
 SWAPBYTEHIGH="540000"
 
@@ -39,18 +29,13 @@ SWAPBYTEHIGH="540000"
 ARRAYUSERS=( user1 user2 user3 user4 ) #  may end up changing from array
 NEWPASS="password"
 ROOTPASS="redhat"
-#  If using a special user for facls or etc its details can be set here
-#  along with a UID for the user
-SPECIALUSR="specialuser"
-SPCLPWD="specialpass"
-SUUID="1313"
-FINDUSER="K2SO"
-FINDDIR="/root/findfiles"
-FINDFILES="/tmp/logs,/var/log/armed,/etc/droid,/home/reprogrammed"
-FOUNDFILE1="logs"
-FOUNDFILE2="armed"
-FOUNDFILE3="droid"
-FOUNDFILE4="reprogrammed"
+FINDUSER="Zanti"
+FINDDIR="/root/Misfits"
+FINDFILES="/tmp/penal_colony,/var/log/insectiods,/etc/rat_sized,/home/alien_demands"
+FOUNDFILE1="penal_colony"
+FOUNDFILE2="insectiods"
+FOUNDFILE3="rat_sized"
+FOUNDFILE4="alien_demands"
 
 ##### Timezone #####
 TIMEZONE="America/Los_Angeles"
@@ -84,7 +69,7 @@ CHKCRONDAYS=
 
 
 ##### Apache #####
-DOCROOT="/test"
+DOCROOT="/inner_limits"
 
 
 ##### Firewall #####
@@ -120,8 +105,8 @@ EOF
 sudo sed -i s/=permissive/=enforcing/g /etc/selinux/config;
 sudo setenforce 1;
 sudo cp /home/vagrant/servera.conf /etc/httpd/conf.d/server1.conf
-sudo mkdir /test
-sudo wget -O /test/index.html http://cloudjedi.org/starwars.html &>/dev/null
+sudo mkdir /inner_limits
+sudo wget -O /inner_limits/index.html http://cloudjedi.org/starwars.html &>/dev/null
 #Delete Repositories
 sudo rm -f /etc/yum.repos.d/*.repo;
 #Create $FINDUSER
@@ -132,7 +117,7 @@ echo "creating files for $FINDUSER"
 sudo touch {$FINDFILES};
 #Change Ownership of those files to the $FINDOWNER
 echo "changing ownership to ${FINDUSER} ";
-sudo chown $FINDUSER:$FINDUSER {$FINDFILES};
+sudo chown $FINDUSER:$FINDUSER ${FINDFILES};
 #Create $GREPFILE
 #wget github.com/OpenCloudJedi/${GREPFILE}
 #Remove firewall rule for Cockpit
@@ -202,9 +187,9 @@ sudo grub2-mkconfig -o /boot/grub2/grub.cfg;"
 ###Run functions#############
 setup_servera
 setup_serverb
-grep -q empire /etc/hosts
+grep -q server1 /etc/hosts
 if [ $? = 1 ]; then
-	echo "172.25.250.10 empire.lab.example.com" | sudo tee -a /etc/hosts;
-	echo "172.25.250.11 rebels.lab.example.com" | sudo tee -a /etc/hosts;
+	echo "172.25.250.10 server1.lab.example.com" | sudo tee -a /etc/hosts;
+	echo "172.25.250.11 server2.lab.example.com" | sudo tee -a /etc/hosts;
 fi
-echo "The setup script is finished. You may login to servera annd serverb to begin your work."
+echo "The setup script is finished. You may login to server1 and server2 to begin your work."
