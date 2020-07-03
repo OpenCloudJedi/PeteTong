@@ -31,7 +31,7 @@ NEWPASS="password"
 ROOTPASS="redhat"
 FINDUSER="Zanti"
 FINDDIR="/root/Misfits"
-FINDFILES="/tmp/penal_colony,/var/log/insectiods,/etc/rat_sized,/home/alien_demands"
+FINDFILES="/tmp/penal_colony /var/log/insectiods /etc/rat_sized /home/alien_demands"
 FOUNDFILE1="penal_colony"
 FOUNDFILE2="insectiods"
 FOUNDFILE3="rat_sized"
@@ -73,8 +73,8 @@ DOCROOT="/inner_limits"
 
 
 ##### Firewall #####
-VHOST_PORT="82"
-SSH_PORT="2222"
+VHOST_PORT="84"
+
 
 function setup_servera() {
 #Install Apache
@@ -91,7 +91,7 @@ enabled=1
 gpgcheck=0
 EOF
 sudo cp /home/vagrant/building.repo /etc/yum.repos.d/building.repo
-sudo yum install httpd -y &>/dev/null;
+sudo yum install httpd nfs-utils -y &>/dev/null;
 #Create VirtualHost for port 84 with DocumentRoot outside of /var/www/html
 cat > /home/vagrant/servera.conf << EOF
 listen 84
@@ -128,10 +128,10 @@ echo "creating user: ${FINDUSER}";
 sudo useradd $FINDUSER;
 #Create files to be found $FINDFILES
 echo "creating files for $FINDUSER"
-sudo touch ${FINDFILES};
+sudo touch {$FINDFILES};
 #Change Ownership of those files to the $FINDOWNER
 echo "changing ownership to ${FINDUSER} ";
-sudo chown $FINDUSER:$FINDUSER ${FINDFILES};
+sudo chown $FINDUSER:$FINDUSER {$FINDFILES};
 #Create $GREPFILE
 #wget github.com/OpenCloudJedi/${GREPFILE}
 #Remove firewall rule for Cockpit
@@ -151,7 +151,7 @@ function setup_serverb() {
 ssh vagrant@server2.eight.example.com "
 sudo head -c 32 /dev/urandom | sudo passwd --stdin root;
 sudo head -c 32 /dev/urandom | sudo passwd --stdin vagrant;
-useradd -M -d /hung_hat/drifter drifter;
+sudo useradd -M -d /hung_hat/drifter drifter;
 echo 'fdisk -u  /dev/sdb <<EOF' >> /home/vagrant/part;
 echo 'n' >> /home/vagrant/part;
 echo 'p' >> /home/vagrant/part;
