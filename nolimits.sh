@@ -82,7 +82,7 @@ enabled=1
 gpgcheck=0
 EOF
 sudo cp /home/vagrant/building.repo /etc/yum.repos.d/building.repo
-sudo yum install httpd nfs-utils -y &>/dev/null;
+sudo yum install httpd nfs-utils words policycoreutils-python-utils-2.8-16.1.el8 -y &>/dev/null;
 #Create VirtualHost for port 84 with DocumentRoot outside of /var/www/html
 cat > /home/vagrant/servera.conf << EOF
 listen 84
