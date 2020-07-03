@@ -31,7 +31,7 @@ NEWPASS="password"
 ROOTPASS="redhat"
 FINDUSER="Zanti"
 FINDDIR="/root/Misfits"
-FINDFILES="/tmp/penal_colony /var/log/insectiods /etc/rat_sized /home/alien_demands"
+FINDFILES="/tmp/penal_colony,/var/log/insectiods,/etc/rat_sized,/home/alien_demands"
 FOUNDFILE1="penal_colony"
 FOUNDFILE2="insectiods"
 FOUNDFILE3="rat_sized"
@@ -46,15 +46,6 @@ YUMREPO1="baseurl.*=.*content\.example\.com\/rhel8.0\/x86_64\/dvd\/BaseOS"
 YUMREPO2="baseurl.*=.*content\.example.com\/rhel8.0\/x86_64\/dvd\/AppStream"
 
 ##### Files and Directories #####
-HOMEDIRUSER=
-USERDIR=
-NOSHELLUSER=
-COLLABDIR="/collabdir"
-COLLABGROUP="rebels"
-TARFILE="/root/tar.tar.gz"
-ORIGTARDIR="lib"  #for /var/lib This Variable works in the script if directed at the relative path
-RSYNCSRC="/boot"
-RSYNCDEST="/rsync_destination"
 FACLONE="/tmp/fstab_copy"
 FACLTWO="/tmp/fstab_copy"
 FACLUSERONE="jyn"
@@ -109,9 +100,11 @@ sudo mkdir -p /hung_hat/drifter;
 sudo chmod 777  /hung_hat/drifter;
 sudo chmod 777  /hung_hat/;
 sudo setsebool -P use_nfs_home_dirs 1;
-sudo cat >> /etc/exports << EOF
+cat >> /home/vagrant/exports << EOF
 /hung_hat/drifter	*(rw,sync)
 EOF
+sudo cp /home/vagrant/exports /etc/exports
+rm -f /home/vagrant/exports /home/vagrant/servera.conf
 sudo systemctl enable nfs-server.service --now;
 sudo exportfs;
 sudo firewall-cmd --add-service=nfs;
