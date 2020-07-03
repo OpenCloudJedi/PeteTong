@@ -140,7 +140,21 @@ sudo firewall-cmd --zone=public --permanent --remove-service=cockpit;
 
 function setup_serverb() {
 #Lockout users
-ssh vagrant@server2.eight.example.com "
+ssh vagrant@server2.eight.example.com "cat > /home/vagrant/building.repo << EOF
+[BaseOS]
+name=BaseOS
+baseurl=http://repo.eight.example.com/BaseOS
+enabled=1
+gpgcheck=0
+[AppStream]
+name=AppStream
+baseurl=http://repo.eight.example.com/AppStream
+enabled=1
+gpgcheck=0
+EOF
+sudo cp /home/vagrant/building.repo /etc/yum.repos.d/building.repo
+sudo yum install nfs-utils -y
+sudo rm -f /etc/yum.repos.d/building.repo
 sudo head -c 32 /dev/urandom | sudo passwd --stdin root;
 sudo head -c 32 /dev/urandom | sudo passwd --stdin vagrant;
 sudo useradd -M -d /hung_hat/drifter drifter;
