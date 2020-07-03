@@ -92,7 +92,7 @@ listen 84
 	CustomLog	logs/localhost.access.log combined
 	ErrorLog	logs/localhost.error.log
 </VirtualHost>
-<Directory ${DOCROOT}
+<Directory ${DOCROOT}>
 	Require all granted
 </Directory>
 EOF
