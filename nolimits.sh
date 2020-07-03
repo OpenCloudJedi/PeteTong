@@ -104,7 +104,6 @@ cat >> /home/vagrant/exports << EOF
 /hung_hat/drifter	*(rw,sync)
 EOF
 sudo cp /home/vagrant/exports /etc/exports
-rm -f /home/vagrant/exports /home/vagrant/servera.conf
 sudo systemctl enable nfs-server.service --now;
 sudo exportfs;
 sudo firewall-cmd --add-service=nfs;
