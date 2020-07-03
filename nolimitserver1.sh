@@ -151,13 +151,19 @@ then
 	function grade_module() {
 		printf "Checking to see that inkscape module is installed and the correct version. "
 
-	  yum module info inkscape | grep "[e]" && grep "[i]" &>/dev/null
+	  yum module info inkscape | grep "[e]"  &>/dev/null
 	  RESULT=$?
           if [ "${RESULT}" -ne 0 ]; then
                   print_FAIL
-                  echo -e "\033[1;31m - inkscape module does not appear to be enabled and installed. \033[0;39m"
+                  echo -e "\033[1;31m - inkscape module does not appear to be enabled. \033[0;39m"
                 return 1
           fi
+					yum module info inkscape | grep "[i]" &>/dev/null
+          if [ "${RESULT}" -ne 0 ]; then
+                  print_FAIL
+                  echo -e "\033[1;31m - inkscape module does not appear to be installed. \033[0;39m"
+                return 1
+        fi
 	  	print_PASS
 	  	return 0
   }
@@ -373,22 +379,28 @@ function grade_shared_directory() {
 #function grade_grep() {}
 
 	function grade_facl() {
-		if [ ! -f $FACLONE ]
+		if [ ! -d $FACLONE ]
   then
     print_FAIL
     echo -e "\033[1;31m - %s does not exist \033[0;39m"
     return 1
   else
-  local facl=$(getfacl -p /OutThere | grep group:caravan:rwx)
-  local checkfacl="group:"$FACLUSERONE":rwx"
-  if ! [ "$facl" = "$checkfacl" ]; then
+  getfacl -p /OutThere | grep -q group:caravan:rwx
+  if  [ $? = 1 ]; then
      print_FAIL
      echo -e "\033[1;31m - Group $FACLUSERONE permission settings on $FACLONE are incorrect. \033[0;39m"
      return 1
   fi
   fi
+	getfacl -p /OutThere | grep -q default:group:caravan:rwx
+	if  [ $? = 1 ]; then
+		 print_FAIL
+		 echo -e "\033[1;31m - Group default facl on $FACLONE are incorrect. \033[0;39m"
+		 return 1
+	fi
+	fi
 
-	if [ ! -f "$FACLTWO" ]
+	if [ ! -d "$FACLTWO" ]
   then
     print_FAIL
     echo -e "\033[1;31m - $FACLTWO does not exist. \033[0;39m"
@@ -455,7 +467,7 @@ function grade_shared_directory() {
   	grade_findfiles
   	grade_fileperms
   	grade_firewalld
-  	grade_php
+  	grade_module
   	  }
 
       lab_grade
