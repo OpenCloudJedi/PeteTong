@@ -398,7 +398,6 @@ function grade_shared_directory() {
 		 echo -e "\033[1;31m - Group default facl on $FACLONE are incorrect. \033[0;39m"
 		 return 1
 	fi
-	fi
 
 	if [ ! -d "$FACLTWO" ]
   then
