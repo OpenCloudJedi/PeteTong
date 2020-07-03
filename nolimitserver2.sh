@@ -21,6 +21,17 @@ EXISTINGFSTYPE="xfs"
 EXISTINGMOUNTPOINT="/TwistAtEnd"
 EXISTINGFSLOW="550"
 EXISTINGFSHIGH="650"
+VGNAME="Plot"
+PESIZE="8"
+LVNAMEONE="Thickens"
+LVSIZEONEMIN="450"
+LVSIZEONEMAX="510"
+LVMMNTONE="/TwistAtEnd"
+LVONETYPE="xfs"
+LVNAMETWO="lv2"
+SWAPPART1SIZE="+256M"
+LVPART2SIZE="+1G"
+LVPART3SIZE="+512M"
 SWAPPART1SIZE="+256M"
 SWAPBYTELOW="6400000"
 SWAPBYTEHIGH="6940000"
@@ -239,14 +250,14 @@ function grade_swap() {
   printf "Checking for new swap partition. "
 
   NUMSWAPS=$(( $(swapon -s | wc -l) - 1 ))
-  if [ ${NUMSWAPS} -lt 1 ]; then
+  if [ ${NUMSWAPS} -lt 2 ]; then
     print_FAIL
-    echo -e "\033[1;31m - No swap partition found. Did you delete the existing? \033[0;39m"
+    echo -e "\033[1;31m - Less than 2 partitions found. Did you delete the existing? \033[0;39m"
     return 1
   fi
-  if [ ${NUMSWAPS} -gt 2 ]; then
+  if [ ${NUMSWAPS} -gt 3 ]; then
     print_FAIL
-    echo -e "\033[1;31m - More than 2 swap partitions  found. \033[0;39m"
+    echo -e "\033[1;31m - More than 3 swap partitions  found. \033[0;39m"
     return 1
   fi
 
