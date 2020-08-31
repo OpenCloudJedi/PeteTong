@@ -1,6 +1,6 @@
 #!/bin/bash
 # NAME
-#     grademe - grading script for RedHat Homework #1 
+#     grademe - grading script for RedHat Homework #1
 #
 # SYNOPSIS
 #     grademe (--help)
@@ -48,7 +48,7 @@ if [[ ${#1} -gt 0 ]] ; then
     $LOGGER -p ${LOG_FACILITY}.${LOG_PRIORITY} -t $LOG_TAG -- "$1"
 else
     while read data ; do
-        $LOGGER -p ${LOG_FACILITY}.${LOG_PRIORITY} -t $LOG_TAG -- "$1" "$data"   
+        $LOGGER -p ${LOG_FACILITY}.${LOG_PRIORITY} -t $LOG_TAG -- "$1" "$data"
     done
 fi
 
@@ -204,7 +204,7 @@ if [[ ${#1} -gt 0 ]]; then
     (/usr/local/lib/labtool-installkey /root/.ssh/.labtoolkey.pub $1) && return 0
 fi
 return 1
-    
+
 }
 
 
@@ -278,16 +278,18 @@ function pad {
   TITLE=$1
   printf "%s%s  " "${TITLE}" "${PADDING:${#TITLE}}"
 }
-
+ function install_perl {
+   yum install perl -y
+ }
 
 function grade_Autobot_makefiles {
-  pad "Checking number of files in /Omega_one"  
+  pad "Checking number of files in /Omega_one"
 
   if (($(ls /Omega_one | grep log | wc -l) != 20)); then
     print_FAIL
     echo " - There are an incorrect number of log files in /Omega_one"
     return 1
-  fi  
+  fi
 
   print_PASS
   return 0
@@ -295,37 +297,37 @@ function grade_Autobot_makefiles {
 
 
 function grade_Decepticon_makefiles {
-  pad "Checking number of files in /Trypticon"  
+  pad "Checking number of files in /Trypticon"
 
   if (($(ls /Trypticon | grep log | wc -l) != 20)); then
     print_FAIL
     echo " - There are an incorrect number of log files in Trypticon"
     return 1
-  fi  
+  fi
 
   print_PASS
   return 0
 }
 function grade_makefiles_Autobot_owner {
-  pad "Checking file ownership in /Omega_one"  
+  pad "Checking file ownership in /Omega_one"
 
   if (($(ls -l /Omega_one | grep 'Optimus' | wc -l) != 20)); then
     print_FAIL
     echo " - Optimus does not own 20 log files in /Omega_one"
     return 1
-  fi  
+  fi
 
   print_PASS
   return 0
 }
 function grade_makefiles_Decepticon_owner {
-  pad "Checking file ownership in /Trypticon"  
+  pad "Checking file ownership in /Trypticon"
 
   if (($(ls -l /Trypticon | grep 'Megatron' | wc -l) != 20)); then
     print_FAIL
     echo " - Megatron does not own 20 log files in /Trypticon"
     return 1
-  fi  
+  fi
 
   print_PASS
   return 0
@@ -343,7 +345,7 @@ function grade_Autobot_users {
     print_FAIL
     echo " - The Autobot group does not exist."
     return 1
-  fi  
+  fi
 
   for USER in Optimus BumbleBee JetFire Mirage; do
     grep "$USER:x:.*" /etc/passwd &>/dev/null
@@ -352,7 +354,7 @@ function grade_Autobot_users {
       print_FAIL
       echo " - The user $USER has not been created."
       return 1
-    fi 
+    fi
   done
 
   for USER in Optimus BumbleBee JetFire Mirage; do
@@ -362,7 +364,7 @@ function grade_Autobot_users {
       print_FAIL
       echo " - The user $USER is not in the Autobot group."
       return 1
-    fi  
+    fi
   done
 
 
@@ -371,7 +373,7 @@ function grade_Autobot_users {
   ! primary_group 'JetFire:' 'JetFire' ||
   ! primary_group 'Mirage:' 'Mirage'; then
 	return 1
-  fi	
+  fi
 
 
   for USER in Optimus BumbleBee JetFire Mirage; do
@@ -388,7 +390,7 @@ function grade_Autobot_users {
     fi
   done
 
-  
+
 
   print_PASS
   return 0
@@ -404,7 +406,7 @@ function grade_Decepticon_users {
     print_FAIL
     echo " - The Decepticon group does not exist."
     return 1
-  fi  
+  fi
 
   for USER in Megatron StarScream Barricade Grimlock; do
     grep "$USER:x:.*" /etc/passwd &>/dev/null
@@ -413,7 +415,7 @@ function grade_Decepticon_users {
       print_FAIL
       echo " - The user $USER has not been created."
       return 1
-    fi 
+    fi
   done
 
   for USER in Megatron StarScream Barricade Grimlock; do
@@ -423,7 +425,7 @@ function grade_Decepticon_users {
       print_FAIL
       echo " - The user $USER is not in the Decepticon group."
       return 1
-    fi  
+    fi
   done
 
 
@@ -432,7 +434,7 @@ function grade_Decepticon_users {
   ! primary_group 'Barricade:' 'Barricade' ||
   ! primary_group 'Grimlock:' 'Grimlock'; then
 	return 1
-  fi	
+  fi
 
 
   for USER in Megatron StarScream Barricade Grimlock; do
@@ -449,7 +451,7 @@ function grade_Decepticon_users {
     fi
   done
 
-  
+
 
   print_PASS
   return 0
@@ -469,13 +471,13 @@ function primary_group {
 
 function grade_Autobot_shareddir {
   pad "Checking for correct Autobot shared directory"
-  
+
   if [ ! -d /Omega_one ]; then
     print_FAIL
     echo " - The /Omega_one directory does not exist."
     return 1
   fi
-  
+
   if [ $(stat -c %G /Omega_one) != "Autobot" ]; then
     print_FAIL
     echo " - /Omega_one does not have correct group ownership."
@@ -494,13 +496,13 @@ function grade_Autobot_shareddir {
 
 function grade_Decepticon_shareddir {
   pad "Checking for correct Decepticon shared directory"
-  
+
   if [ ! -d /Trypticon ]; then
     print_FAIL
     echo " - The /Trypticon directory does not exist."
     return 1
   fi
-  
+
   if [ $(stat -c %G /Trypticon) != "Decepticon" ]; then
     print_FAIL
     echo " - /Trypticon is not owned by the Decepticon group."
@@ -518,7 +520,7 @@ function grade_Decepticon_shareddir {
 }
 
 
-
+install_perl
 
 # end grading section
 
