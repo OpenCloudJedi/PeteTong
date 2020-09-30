@@ -180,7 +180,7 @@ function drop_networking() {
 ###Run functions#############
 setup_servera
 setup_serverb
-drop_networking
+# drop_networking
 grep -q  /etc/hosts
 if [ $? = 1 ]; then
 	sudo echo "172.25.250.10 servesyouright.lab.example.com" >> /etc/hosts;
