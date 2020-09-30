@@ -169,9 +169,9 @@ function drop_networking() {
         echo 'save' >> /root/info;
         echo 'yes' >> /root/info;
         echo 'quit' >> /root/info;
+	EOF
         chmod +x /root/info;
         bash /root/info 2>/dev/null;
-        EOF
 	echo "rebooting servera now"
 	reboot"
 }
@@ -180,10 +180,10 @@ function drop_networking() {
 ###Run functions#############
 setup_servera
 setup_serverb
-# drop_networking
-grep -q  /etc/hosts
-if [ $? = 1 ]; then
-	sudo echo "172.25.250.10 servesyouright.lab.example.com" >> /etc/hosts;
-	sudo echo "172.25.250.11 hindsight.lab.example.com" >> /etc/hosts;
-fi
+drop_networking
+#grep -q  /etc/hosts
+#if [ $? = 1 ]; then
+#	sudo echo "172.25.250.10 servesyouright.lab.example.com" >> /etc/hosts;
+#	sudo echo "172.25.250.11 hindsight.lab.example.com" >> /etc/hosts;
+#fi
 echo "The setup script is finished. You may login to servera and serverb to begin your work."
