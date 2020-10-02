@@ -1,3 +1,16 @@
+##### Users and Groups #####
+ARRAYUSERS=( user1 user2 user3 user4 ) #  may end up changing from array
+NEWPASS="password"
+ROOTPASS="redhat"
+FINDUSER="Zanti"
+FINDDIR="/root/Misfits"
+FINDFILES="/tmp/penal_colony,/var/log/insectiods,/etc/rat_sized,/home/alien_demands"
+FOUNDFILE1="penal_colony"
+FOUNDFILE2="insectiods"
+FOUNDFILE3="rat_sized"
+FOUNDFILE4="alien_demands"
+DOCROOT="/inner_limits"
+
 cat > /home/vagrant/building.repo << EOF
 [BaseOS]
 name=BaseOS
