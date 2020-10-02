@@ -4,7 +4,7 @@ NEWPASS="password"
 ROOTPASS="redhat"
 FINDUSER="Zanti"
 FINDDIR="/root/Misfits"
-FINDFILES="/tmp/penal_colony,/var/log/insectiods,/etc/rat_sized,/home/alien_demands"
+FINDFILES="/tmp/penal_colony /var/log/insectiods /etc/rat_sized /home/alien_demands"
 FOUNDFILE1="penal_colony"
 FOUNDFILE2="insectiods"
 FOUNDFILE3="rat_sized"
@@ -62,10 +62,10 @@ echo "creating user: ${FINDUSER}";
 useradd $FINDUSER;
 #Create files to be found $FINDFILES
 echo "creating files for $FINDUSER"
-touch {$FINDFILES};
+touch $FINDFILES ;
 #Change Ownership of those files to the $FINDOWNER
 echo "changing ownership to ${FINDUSER} ";
-chown $FINDUSER:$FINDUSER {$FINDFILES};
+chown $FINDUSER:$FINDUSER $FINDFILES ;
 #Create $GREPFILE
 #wget github.com/OpenCloudJedi/${GREPFILE}
 #Remove firewall rule for Cockpit
