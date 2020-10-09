@@ -79,6 +79,8 @@ VHOST_PORT="84"
 SSH_PORT="2222"
 
 function setup_servera() {
+yum install perl -y;
+yum remove vim -y;
 echo "Setting up servera"
 #Install Apache
 ssh root@servera "yum install httpd -y &>/dev/null;
