@@ -95,6 +95,10 @@ function hide_files() {
   chown Gossamer /tmp/place/honest_people
 }
 
+function install_perl() {
+  yum install perl -qy
+}
+
 #************#
 #   Grader   #
 #************#
@@ -374,6 +378,7 @@ fi
 # Main body of script
 case $1 in
   setup )
+        install_perl
         create_users
         ascii_art
         marvin
