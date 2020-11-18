@@ -14,9 +14,8 @@ function lab_setup() {
     exit 1
   fi
   dd if=/dev/urandom of=~/batmobile.img bs=1M count=256
-  mkdir /home/${CONTAINERUSER}/containers
-  chown ${CONTAINERUSER}:${CONTAINERUSER} /home/${CONTAINERUSER}/containers
-  cat > /home/${CONTAINERUSER}/.config/containers/registries.conf << EOF
+  mkdir -p /home/${CONTAINERUSER}/.config/containers
+  chown -R ${CONTAINERUSER}:${CONTAINERUSER} /home/${CONTAINERUSER}/.config
   unqualified-search-registries = ['registry.lab.example.com']
 
 [[registry]]
