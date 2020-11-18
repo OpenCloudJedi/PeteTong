@@ -265,4 +265,5 @@ case $1 in
     * )
     echo "Usage is Batty.sh setup|grade"
     exit 0
+    ;;
 esac
