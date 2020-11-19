@@ -13,7 +13,10 @@ function lab_setup() {
     echo "The Robin user already exists. This script must have been run before. Exiting."
     exit 1
   fi
+  grep Robin /etc/sudoers
+  if [[ $? -ne 0 ]]; then
   echo "Robin ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+  fi
   dd if=/dev/urandom of=~/batmobile.img bs=1M count=256
   mkdir -p /home/${CONTAINERUSER}/.config/containers
   chown -R ${CONTAINERUSER}:${CONTAINERUSER} /home/${CONTAINERUSER}/.config
