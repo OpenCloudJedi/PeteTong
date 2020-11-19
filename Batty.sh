@@ -85,7 +85,7 @@ function grade_lv1() {
     return 1
   fi
   read DEV TYPE MOUNTPOINT <<< $(df --output=source,fstype,target /Rises 2> /dev/null | grep /Rises 2> /dev/null) &> /dev/null
-  if [ "${DEV}" != "/dev/mapper/Dark-Knight}" ]; then
+  if [ "${DEV}" != "/dev/mapper/Dark-Knight" ]; then
     print_FAIL
     echo -e "\033[1;31m - Wrong device mounted on /Rises. \033[0;39m"
     return 1
@@ -145,9 +145,9 @@ function grade_vdo() {
     echo -e "\033[1;31m - Either vdo volume BatCave doesn't exist or isn't mounted at /Garage. \033[0;39m"
   fi
 
-  echo " · Verifying the files in VDO volume on ${target}"
-  if ${ssh} ${target} "test -s /Garage/batmobile.img.1" &&
-     ${ssh} ${target} "test -s Garage/batmobile.img.2"
+  echo " · Verifying the files in VDO volume on server"
+  if test -s /Garage/batmobile.img.1 &&
+     test -s Garage/batmobile.img.2
   then
     print_PASS
   else
@@ -235,7 +235,8 @@ echo -e "\033[1;31m - The SELinux context is not correct on /home/Robin/DocRoot 
    fi
 
       echo " · The systemd service for the container is enabled"
-   if "id Robin"
+   id Robin
+   if [[ $? -eq 0]]
    then
      if systemctl --user is-enabled container-webserve.service
      then
@@ -246,6 +247,7 @@ echo -e "\033[1;31m - The SELinux context is not correct on /home/Robin/DocRoot 
      fi
    else
      print_FAIL
+     echo -e "\033[1;31m - The user Robin doesnt exist \033[0;39m"
    fi
 }
 
