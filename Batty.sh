@@ -147,7 +147,7 @@ function grade_vdo() {
 
   echo " · Verifying the files in VDO volume on server"
   if test -s /Garage/batmobile.img.1 &&
-     test -s Garage/batmobile.img.2
+     test -s /Garage/batmobile.img.2
   then
     print_PASS
   else
@@ -236,7 +236,7 @@ echo -e "\033[1;31m - The SELinux context is not correct on /home/Robin/DocRoot 
 
       echo " · The systemd service for the container is enabled"
    id Robin
-   if [[ $? -eq 0]]
+   if [[ $? -eq 0 ]];
    then
      if systemctl --user is-enabled container-webserve.service
      then
