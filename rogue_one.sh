@@ -186,8 +186,8 @@ tuned-adm profile throughput-performance;
 yum install autofs -y &>/dev/null;
 #Extend grub timeout
 #Fix grub
-sed -i s/TIMEOUT=1/TIMEOUT=20/g /etc/default/grub ;
-grub2-mkconfig > /boot/grub2/grub.cfg;
+#sed -i s/TIMEOUT=1/TIMEOUT=20/g /etc/default/grub ;
+#grub2-mkconfig > /boot/grub2/grub.cfg;
 	"
 }
 
