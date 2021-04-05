@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # This is the setup and grader script for the 4th homework assignment.
+# Hey Coby, student should run the grader as Robin, otherwise the container fails. 
 CONTAINERUSER=Robin
 
 ### Setup Section ###
@@ -18,11 +19,11 @@ function lab_setup() {
   echo "Robin ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
   fi
   dd if=/dev/urandom of=~/batmobile.img bs=1M count=256
+  cp /home/student/Batty.sh /home/Robin/Batty.sh
   mkdir -p /home/${CONTAINERUSER}/.config/containers
   chown -R ${CONTAINERUSER}:${CONTAINERUSER} /home/${CONTAINERUSER}/.config
   cat > /home/${CONTAINERUSER}/.config/containers/registries.conf << EOF
   unqualified-search-registries = ['registry.lab.example.com']
-
 [[registry]]
 location = "registry.lab.example.com"
 insecure = true
@@ -41,7 +42,7 @@ function print_FAIL() {
 
 function grade_lvadd() {
   printf "Checking completion of Logical Volume addition. "
-  read LV VG A SIZE A <<< $(lvs --noheadings --units=m Dark 2>/dev/null | grep Crusader) &> /dev/null
+  read LV VG A SIZE A <<< $(sudo lvs --noheadings --units=m Dark 2>/dev/null | grep Crusader) &> /dev/null
   if [ "${LV}" != "Crusader" ]; then
     print_FAIL
     echo -e "\033[1;31m - No LV named Crusader found in VG Dark. Go back and check your work. \033[0;39m"
@@ -57,14 +58,14 @@ function grade_lvadd() {
 function grade_vg() {
   printf "Checking for new VG with correct PE size"
 
-  read VG A A A A SIZE A <<< $(vgs --noheadings --units=m ${VGNAME} 2>/dev/null) &> /dev/null
+  read VG A A A A SIZE A <<< $(sudo vgs --noheadings --units=m ${VGNAME} 2>/dev/null) &> /dev/null
   if [ "${VG}" != "Dark" ]; then
     print_FAIL
     echo -e "\033[1;31m - No Volume Group named Dark found. \033[0;39m"
     return 1
   fi
 
-  if ! vgdisplay Dark | grep 'PE Size' | grep -q "16"; then
+  if ! sudo vgdisplay Dark | grep 'PE Size' | grep -q "16"; then
     print_FAIL
     echo -e "\033[1;31m - Incorrect PE size on volume group Crusader. Should be set to 16M \033[0;39m"
     return 1
@@ -75,7 +76,7 @@ function grade_vg() {
 
 function grade_lv1() {
   printf "Checking the Logical Volume Setup."
-  read LV VG A SIZE A <<< $(lvs --noheadings --units=m Dark 2>/dev/null | grep Knight) &> /dev/null
+  read LV VG A SIZE A <<< $(sudo lvs --noheadings --units=m Dark 2>/dev/null | grep Knight) &> /dev/null
   if [ "${LV}" != "Knight" ]; then
     print_FAIL
     echo -e "\033[1;31m - No LV named Knight found in VG Dark \033[0;39m"
@@ -137,7 +138,7 @@ function grade_stratis() {
 
 function grade_vdo() {
   echo " · Verifying the VDO volume"
-  vdo_volume_verify=$(vdo status -n BatCave | grep -i size | grep Logical | grep 50G | wc -l)
+  vdo_volume_verify=$(sudo vdo status -n BatCave | grep -i size | grep Logical | grep 50G | wc -l)
   vdo_mount_verify=$(mount | grep /Garage | grep xfs | wc -l)
   if [ ${vdo_volume_verify} -eq 1 ] &&
      [ ${vdo_mount_verify} -eq 1 ]
@@ -170,7 +171,7 @@ function grade_container() {
   fi
   echo "Checking that webserve container exists"
   TMP_FILE="$(mktemp)"
-  su - Robin -c 'podman inspect webserve' > "${TMP_FILE}"
+  podman inspect webserve > "${TMP_FILE}"
   if [ $? -eq 0 ]
   then
     print_PASS
