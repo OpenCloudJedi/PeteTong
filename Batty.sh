@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # This is the setup and grader script for the 4th homework assignment.
-# Hey Coby, student should run the grader as Robin, otherwise the container fails. 
+# Hey Coby, student should run the grader as Robin, otherwise the container fails.
 CONTAINERUSER=Robin
 
 ### Setup Section ###
@@ -29,6 +29,16 @@ location = "registry.lab.example.com"
 insecure = true
 blocked = false
 EOF
+
+#Add repo file for latest vversion of podman
+  cat > /etc/yum.repos.d/updates.repo <<EOF
+  [rhel-8.2-for-x86_64-appstream-updated-rpms]
+baseurl = http://content.example.com/rhel8.2/x86_64/rhel8-additional/rhel-8-for-x86_64-appstream-rpms
+enabled = true
+gpgcheck = false
+name = Red Hat Enterprise Linux 8.2 AppStream (updates)
+EOF
+yum clean all
 }
 
 #  Colored PASS and FAIL for grading
