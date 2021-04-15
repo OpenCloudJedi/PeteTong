@@ -1,3 +1,4 @@
+#!/bin/bash
 ##### Users and Groups #####
 ARRAYUSERS=( user1 user2 user3 user4 ) #  may end up changing from array
 NEWPASS="password"
@@ -11,20 +12,8 @@ FOUNDFILE3="rat_sized"
 FOUNDFILE4="alien_demands"
 DOCROOT="/inner_limits"
 
-cat > /home/vagrant/building.repo << EOF
-[BaseOS]
-name=BaseOS
-baseurl=http://repo.eight.example.com/BaseOS
-enabled=1
-gpgcheck=0
-[AppStream]
-name=AppStream
-baseurl=http://repo.eight.example.com/AppStream
-enabled=1
-gpgcheck=0
-EOF
-cp /home/vagrant/building.repo /etc/yum.repos.d/building.repo
-yum install httpd nfs-utils words policycoreutils-python-utils-2.8-16.1.el8 -y &>/dev/null;
+
+yum install httpd vim nfs-utils words policycoreutils-python-utils policycoreutils -y &>/dev/null;
 #Create VirtualHost for port 84 with DocumentRoot outside of /var/www/html
 cat > /home/vagrant/servera.conf << EOF
 listen 84
@@ -68,5 +57,4 @@ echo "changing ownership to ${FINDUSER} ";
 chown $FINDUSER:$FINDUSER $FINDFILES ;
 #Create $GREPFILE
 #wget github.com/OpenCloudJedi/${GREPFILE}
-#Remove firewall rule for Cockpit
-firewall-cmd --zone=public --permanent --remove-service=cockpit;
+
