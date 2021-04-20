@@ -49,8 +49,8 @@ TIMEZONE="America/Los_Angeles"
 TZSERVER="server time\.google\.com.*iburst"
 
 ##### Yum #####
-YUMREPO1="baseurl.*=.*repo\.eight\.example\.com\/BaseOS"
-YUMREPO2="baseurl.*=.*repo\.eight\.example.com\/AppStream"
+YUMREPO1='http://mirror.centos.org/$contentdir/$releasever/AppStream/$basearch/os'
+YUMREPO2='http://mirror.centos.org/$contentdir/$releasever/BaseOS/$basearch/os'
 
 ##### Files and Directories #####
 COLLABDIR="/community"
@@ -103,7 +103,7 @@ function grade_httpd() {
     echo -e '\033[1;31m - httpd.service not set to be started at boot.\033[0;39m'
     return 1
   fi
-  if ! curl -v --silent localhost:84 2>&1 | grep -q 'You got it working'; then
+  if ! curl -v --silent localhost:84 2>&1 | grep -q 'nothing beyond'; then
     print_FAIL
     echo -e '\033[1;31m - You are not serving the correct webpage.\033[0;39m'
     return 1
