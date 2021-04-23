@@ -9,7 +9,7 @@
 #  Alter these to suit your personal guide #############
 ########################################################
 
-CHECKHOSTNAME="servesyouright.lab.example.com"
+CHECKHOSTNAME="servesyouright.test"
 PROGNAME=$0
 SETUPLABEL="/tmp/.setuplabel"
 
