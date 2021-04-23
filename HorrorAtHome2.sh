@@ -5,7 +5,7 @@
 #  Alter these to suit your personal guide #############
 ########################################################
 
-CHECKHOSTNAME="serverb.lab.example.com"
+CHECKHOSTNAME="server2.test"
 PROGNAME=$0
 SETUPLABEL="/tmp/.setuplabel"
 
