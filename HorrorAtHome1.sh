@@ -178,7 +178,7 @@ then
 		  echo -e "\033[1;31m - PHP does not appear to be installed because there was no php.ini file. \033[0;39m"
 		return 1
 	  fi
-	  rpm -qi php-cli | grep "7.2.11" &>/dev/null
+	  rpm -qi php-cli | grep "7.2.24-1" &>/dev/null
 	  RESULT=$?
           if [ "${RESULT}" -ne 0 ]; then
                   print_FAIL
