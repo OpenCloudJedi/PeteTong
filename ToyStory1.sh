@@ -28,7 +28,7 @@ ROOTPASS="moving"
 #  along with a UID for the user
 SPECIALUSR="buzz"
 SPCLPWD="moving"
-$SPECIALSH="/bin/sh"
+SPECIALSH="/bin/sh"
 SUUID="2100"
 FINDUSER="Zurg"
 FINDDIR="/root/Emperor"
@@ -241,7 +241,7 @@ then
 	  done
 	  	print_PASS
 		return 0
-	}
+}
 
 
 function grade_repos() {
