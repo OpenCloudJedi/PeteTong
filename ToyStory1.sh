@@ -209,11 +209,11 @@ then
 	    echo -e "\033[1;31m - The user ${SPECIALUSR}s uid is not set to $SUUID \033[0;39m"
 	    return 1
 	  fi
-    if ! cat /etc/passwd | grep "$SPECIALUSR" | grep -q "$SPECIALSH"
-      print_FAIL
-      echo -e "\033[1;31m - The user ${SPECIALUSR}s shell is not set to ${SPECIALSH} \033[0;39m"
-	    return 1
-
+	  if ! cat /etc/passwd | grep "$SPECIALUSR" | grep -q "$SPECIALSH"; then
+     	     print_FAIL
+      	     echo -e "\033[1;31m - The user ${SPECIALUSR}s shell is not set to ${SPECIALSH} \033[0;39m"
+	     return 1
+	  fi
 	  for USER in ${ARRAYUSERS}; do
 	    FULLHASH=$(grep "^$USER:" /etc/shadow | cut -d: -f 2)
 	    SALT=$(grep "^$USER:" /etc/shadow | cut -d'$' -f3)
@@ -239,8 +239,8 @@ then
 	      return 1
 	    fi
 	  done
-	  	print_PASS
-		return 0
+	print_PASS
+	return 0
 }
 
 
@@ -280,9 +280,12 @@ function grade_shared_directory() {
 		echo -e "\033[1;31m %s does not have correct permissions \033[0;39m"
 		return 1
 	fi
-	printf "Your shared directory has been setup correctly with the correct ownershop and permissions."
-        print_PASS
-        return 0
+	if $? == 0
+	then
+		printf "Your shared directory has been setup correctly with the correct ownershop and permissions."
+        	print_PASS
+        	return 0
+	fi
 }
 
 	function grade_fileperms() {
@@ -424,7 +427,8 @@ function grade_shared_directory() {
   	printf "The facls appear to have been configured correctly."
   	print_PASS
 	return 0
-	}
+  }
+
 
   #############################
   #######calling all functions######
@@ -441,6 +445,7 @@ function grade_shared_directory() {
   	grade_fileperms
   	grade_firewalld
   	grade_php
-  	  }
+}
+
 
       lab_grade
