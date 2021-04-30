@@ -200,7 +200,7 @@ vdo status --name=VDObox | grep -q "Logical size: 50G"
   return 0
 }
 
-function grade_() {
+function grade_stratis() {
   printf "Checking that Stratis volume exists and is set to be available at boot time. "
   rpm -qi stratisd | grep "package stratisd is not installed" &>/dev/null
               RESULT=$?
