@@ -209,13 +209,11 @@ then
 	    echo -e "\033[1;31m - The user ${SPECIALUSR}s uid is not set to $SUUID \033[0;39m"
 	    return 1
 	  fi
-
 	  if ! cat /etc/passwd | grep "$SPECIALUSR" | grep -q "$SPECIALSH"; then
      	     print_FAIL
       	     echo -e "\033[1;31m - The user ${SPECIALUSR}s shell is not set to ${SPECIALSH} \033[0;39m"
 	     return 1
 	  fi
-
 	  for USER in ${ARRAYUSERS}; do
 	    FULLHASH=$(grep "^$USER:" /etc/shadow | cut -d: -f 2)
 	    SALT=$(grep "^$USER:" /etc/shadow | cut -d'$' -f3)
@@ -431,6 +429,7 @@ function grade_shared_directory() {
 	return 0
   }
 
+
   #############################
   #######calling all functions######
   function lab_grade() {
@@ -447,5 +446,6 @@ function grade_shared_directory() {
   	grade_firewalld
   	grade_php
 }
+
 
       lab_grade

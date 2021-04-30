@@ -17,28 +17,7 @@ SETUPLABEL="/tmp/.setuplabel"
 CONNAME="conname"
 ORIGINALCON="ifcfg-eth1"
 
-##### VG & LV #####
-EXISTINGVGNAME="Death"
-EXISTINGPESIZE="8M"
-EXISTINGLVNAME="Star"
-EXISTINGLVSIZE="480M"
-EXISTINGFSTYPE="ext4"
-EXISTINGMOUNTPOINT="/Live_Demo"
-EXISTINGFSLOW="650"
-EXISTINGFSHIGH="750"
-VGNAME="VolGroup"
-PESIZE="16"
-LVNAMEONE="lv1"
-LVSIZEONEMIN="450"
-LVSIZEONEMAX="510"
-LVMMNTONE="/mountpoint1"
-LVONETYPE="ext4"
-LVNAMETWO="lv2"
-SWAPPART1SIZE="+256M"
-LVPART2SIZE="+1G"
-LVPART3SIZE="+512M"
-SWAPBYTELOW="500000"
-SWAPBYTEHIGH="540000"
+
 
 ##### Users and Groups #####
 ARRAYUSERS=( boils ghouls kiddies ) #  may end up changing from array
@@ -62,8 +41,8 @@ TIMEZONE="America/Los_Angeles"
 TZSERVER="server classroom\.example\.com.*iburst"
 
 ##### Yum #####
-YUMREPO1="baseurl.*=.*content\.example\.com\/rhel8.0\/x86_64\/dvd\/BaseOS"
-YUMREPO2="baseurl.*=.*content\.example.com\/rhel8.0\/x86_64\/dvd\/AppStream"
+YUMREPO1="baseurl.*='http://mirror.centos.org/centos/8-stream/BaseOS/x86_64/os/'"
+YUMREPO2="baseurl.*='http://mirror.centos.org/centos/8-stream/AppStream/x86_64/os/'"
 
 ##### Files and Directories #####
 HOMEDIRUSER=
