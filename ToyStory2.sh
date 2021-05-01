@@ -155,7 +155,7 @@ function grade_lv1() {
 function grade_performance() {
   printf "Checking performance profile. "
   TUNED=$(tuned-adm active)
-  if [ "${TUNED}" = "Current active profile: performance" ]; then
+  if [ "${TUNED}" = "Current active profile: desktop" ]; then
     print_PASS
     return 0
   else
@@ -254,12 +254,12 @@ function grade_swap() {
   printf "Checking for new swap partition. "
 
   NUMSWAPS=$(swapon -s | wc -l)
-  if [ ${NUMSWAPS} -lt 2 ]; then
+  if [ ${NUMSWAPS} -lt 4 ]; then
     print_FAIL
-    echo -e "\033[1;31m - No swap partition found. Did you delete the existing? \033[0;39m"
+    echo -e "\033[1;31m - You don't have swap configured properly. \033[0;39m"
     return 1
   fi
-  if [ ${NUMSWAPS} -gt 3 ]; then
+  if [ ${NUMSWAPS} -gt 4 ]; then
     print_FAIL
     echo -e "\033[1;31m - More than 2 swap partitions  found. \033[0;39m"
     return 1
