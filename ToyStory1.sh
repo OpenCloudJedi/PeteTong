@@ -388,7 +388,7 @@ function grade_shared_directory() {
     echo -e "\033[1;31m - File does not exist \033[0;39m"
     return 1
   else
-  local facl=$(getfacl -p /WoodysRescue | grep user:babyface:rw-)
+  local facl=$(getfacl -p /WoodysRescue | grep user:babyface:r--)
   local checkfacl="user:"$FACLUSERONE":r--"
   if ! [ "$facl" = "$checkfacl" ]; then
      print_FAIL
