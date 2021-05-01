@@ -382,14 +382,14 @@ function grade_shared_directory() {
 #function grade_grep() {}
 
 	function grade_facl() {
-		if [ ! -d $FACLONE ]
+		if [ ! -f $FACLONE ]
   then
     print_FAIL
-    echo -e "\033[1;31m - Directory does not exist \033[0;39m"
+    echo -e "\033[1;31m - File does not exist \033[0;39m"
     return 1
   else
   local facl=$(getfacl -p /WoodysRescue | grep user:babyface:rw-)
-  local checkfacl="user:"$FACLUSERONE":rw-"
+  local checkfacl="user:"$FACLUSERONE":r--"
   if ! [ "$facl" = "$checkfacl" ]; then
      print_FAIL
      echo -e "\033[1;31m - User $FACLUSERONE permission settings on $FACLONE are incorrect. \033[0;39m"
@@ -397,7 +397,7 @@ function grade_shared_directory() {
   fi
   fi
 
-	if [ ! -d "$FACLTWO" ]
+	if [ ! -f "$FACLTWO" ]
   then
     print_FAIL
     echo -e "\033[1;31m - $FACLTWO does not exist. \033[0;39m"
@@ -409,7 +409,7 @@ function grade_shared_directory() {
      print_FAIL
      echo -e "\033[1;31m - User $FACLUSERTWO permission settings on $FACLTWO are incorrect. \033[0;39m"
      return 1
-		 if [ ! -d "$FACLTWO" ]
+		 if [ ! -f "$FACLTWO" ]
   then
     print_FAIL
     echo -e "\033[1;31m - $FACLTWO does not exist. \033[0;39m"
