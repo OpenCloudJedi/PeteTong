@@ -43,8 +43,8 @@ TIMEZONE="America/Los_Angeles"
 TZSERVER="server classroom\.example\.com.*iburst"
 
 ##### Yum #####
-YUMREPO1="baseurl.*='http://mirror.centos.org/$contentdir/$releasever/AppStream/$basearch/os'"
-YUMREPO2="baseurl.*='http://mirror.centos.org/$contentdir/$releasever/BaseOS/$basearch/os'"
+YUMREPO1="baseurl=http://mirror.centos.org/$contentdir/$releasever/AppStream/$basearch/os"
+YUMREPO2="baseurl=http://mirror.centos.org/$contentdir/$releasever/BaseOS/$basearch/os"
 
 ##### Files and Directories #####
 HOMEDIRUSER=
