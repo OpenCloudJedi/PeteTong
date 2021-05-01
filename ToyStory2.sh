@@ -20,25 +20,25 @@ EXISTINGLVNAME="Gang"
 EXISTINGLVSIZE="400M"
 EXISTINGFSTYPE="xfs"
 EXISTINGMOUNTPOINT="/VendingMachine"
-EXISTINGFSLOW="200"
-EXISTINGFSHIGH="300"
+EXISTINGFSLOW="550"
+EXISTINGFSHIGH="650"
 VGNAME="Lost"
 PESIZE="8"
 LVNAMEONE="Toys"
-LVSIZEONEMIN="550"
-LVSIZEONEMAX="650"
+LVSIZEONEMIN="472"
+LVSIZEONEMAX="488"
 LVMMNTONE="/rescuer"
 LVONETYPE="xfs"
 LVNAMETWO="lv2"
 SWAPPART1SIZE="+400"
 LVPART2SIZE="+1G"
 LVPART3SIZE="+512M"
-SWAPBYTELOW="350000"
-SWAPBYTEHIGH="450000"
+SWAPBYTELOW="247000"
+SWAPBYTEHIGH="264000"
 
 ##### Users and Groups #####
-NEWPASS="suspenseful"
-ROOTPASS="suspenseful"
+NEWPASS="daycare"
+ROOTPASS="daycare"
 
 ##### Timezone #####
 TIMEZONE="America/Los_Angeles"
@@ -155,7 +155,7 @@ function grade_lv1() {
 function grade_performance() {
   printf "Checking performance profile. "
   TUNED=$(tuned-adm active)
-  if [ "${TUNED}" = "Current active profile: desktop" ]; then
+  if [ "${TUNED}" = "Current active profile: performance" ]; then
     print_PASS
     return 0
   else
@@ -189,11 +189,11 @@ vdo list | grep -q VDObox
                 echo -e "\033[1;31m - VDO volume VDObox unavailable. \033[0;39m"
               return 1
       fi
-vdo status --name=VDObox | grep -q "Logical size: 50G"
+vdo status --name=VDObox | grep -q "Logical size: 10G"
   RESULT=$?
       if [ "${RESULT}" -ne 0 ]; then
                 print_FAIL
-                echo -e "\033[1;31m - VDO volume VDObox doesn't have a logical size of 50G. \033[0;39m"
+                echo -e "\033[1;31m - VDO volume VDObox doesn't have a logical size of 10G. \033[0;39m"
               return 1
       fi
   print_PASS
@@ -253,19 +253,19 @@ RESULT=$?
 function grade_swap() {
   printf "Checking for new swap partition. "
 
-  NUMSWAPS=$(( $(swapon -s | wc -l) - 1 ))
-  if [ ${NUMSWAPS} -lt 1 ]; then
+  NUMSWAPS=$(swapon -s | wc -l)
+  if [ ${NUMSWAPS} -lt 2 ]; then
     print_FAIL
     echo -e "\033[1;31m - No swap partition found. Did you delete the existing? \033[0;39m"
     return 1
   fi
-  if [ ${NUMSWAPS} -gt 2 ]; then
+  if [ ${NUMSWAPS} -gt 3 ]; then
     print_FAIL
     echo -e "\033[1;31m - More than 2 swap partitions  found. \033[0;39m"
     return 1
   fi
 
-  read PART TYPE SIZE USED PRIO <<< $(swapon -s | grep -v /dev/sdb1 2>/dev/null | tail -n1 2>/dev/null) 2>/dev/null
+  read PART TYPE SIZE USED PRIO <<< $(swapon -s | grep -v /dev/sdb3 2>/dev/null | tail -n1 2>/dev/null) 2>/dev/null
   if [ "${TYPE}" != "partition" ]; then
     print_FAIL
     echo -e "\033[1;31m - Swap is not a partition. \033[0;39m"
@@ -346,7 +346,7 @@ function grade_rsync {
 
 function lab_grade() {
 	install_perl
-  grade_rsync
+ 	grade_rsync
 	grade_rootpw
 	grade_tar
 	grade_nfs

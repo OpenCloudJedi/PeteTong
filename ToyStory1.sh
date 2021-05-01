@@ -1,4 +1,3 @@
-#Toy story script for Server1
 #This is the file for the at home Tails From the Script guide
 #!/bin/bash
 
@@ -43,8 +42,8 @@ TIMEZONE="America/Los_Angeles"
 TZSERVER="server classroom\.example\.com.*iburst"
 
 ##### Yum #####
-YUMREPO1="baseurl.*='http://mirror.centos.org/centos/8-stream/BaseOS/x86_64/os/'"
-YUMREPO2="baseurl.*='http://mirror.centos.org/centos/8-stream/AppStream/x86_64/os/'"
+YUMREPO1="baseurl.*='http://mirror.centos.org/$contentdir/$releasever/AppStream/basearch/os'"
+YUMREPO2="baseurl.*='http://mirror.centos.org/$contentdir/$releasever/BaseOS/basearch/os'"
 
 ##### Files and Directories #####
 HOMEDIRUSER=
@@ -62,7 +61,7 @@ FACLUSERONE="babyface"
 FACLUSERTWO="ducky"
 GREPFILESRC="/usr/share/dict/words"
 GREPFILEDEST="/root/roundup"
-
+VIBECHECK="0"
 
 ##### Apache #####
 DOCROOT="/Pizza_planet"
@@ -104,7 +103,7 @@ function grade_httpd() {
     echo -e '\033[1;31m - httpd.service not set to be started at boot.\033[0;39m'
     return 1
   fi
-  if ! curl -v --silent localhost:83 2>&1 | grep -q 'You got it working'; then
+  if ! curl -v --silent localhost:84 2>&1 | grep -q 'eternally'; then
     print_FAIL
     echo -e '\033[1;31m - You are not serving the correct webpage.\033[0;39m'
     return 1
@@ -267,24 +266,25 @@ function grade_repos() {
 }
 
 function grade_shared_directory() {
-	if [ $(stat -c %G "$COLLABDIR") != "$COLLABGROUP" ]
+	if [ $(stat -c %G "$COLLABDIR") == "$COLLABGROUP" ]
 	then
+		if [ $(stat -c %a "$COLLABDIR") -ne 2770 ]
+		then
+			print_FAIL
+			echo -e "\033[1;31m $COLLABDIR does not have correct permissions \033[0;39m"
+			return 1
+		
+		elif [ $(stat -c %a "$COLLABDIR") -eq 2770 ]
+		then
+			print_PASS
+			echo -e "\033[1;31m $COLLABDIR does has correct permissions \033[0;39m"
+			print_PASS
+			echo -e "Your shared directory has been correctly setup with correct ownership and permissions!"
+		fi
+	else
 		print_FAIL
-		echo  -e "\033[1;31m - %s does not have correct group ownership (${COLLABGROUP}) on $COLLABDIR \033[0;39m"
-		return 1
-	fi
-
-	if [ $(stat -c %a "$COLLABDIR") -ne 2770 ]
-	then
-		print_FAIL
-		echo -e "\033[1;31m %s does not have correct permissions \033[0;39m"
-		return 1
-	fi
-	if $? == 0
-	then
-		printf "Your shared directory has been setup correctly with the correct ownershop and permissions."
-        	print_PASS
-        	return 0
+		echo  -e "\033[1;31m - $COLLABDIR does not have correct group ownership (${COLLABGROUP})  \033[0;39m"
+		
 	fi
 }
 
@@ -384,7 +384,7 @@ function grade_shared_directory() {
 		if [ ! -f $FACLONE ]
   then
     print_FAIL
-    echo -e "\033[1;31m - %s does not exist \033[0;39m"
+    echo -e "\033[1;31m - Directory does not exist \033[0;39m"
     return 1
   else
   local facl=$(getfacl -p /WoodysRescue | grep user:babyface:rw-)
