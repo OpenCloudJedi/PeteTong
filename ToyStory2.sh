@@ -1,75 +1,57 @@
-#Toy story script for Server1
-#This is the file for the at home Tails From the Script guide
+#This is the grader script for Server2 on the Toy Story Review
 #!/bin/bash
-
-#This is the grader script for the tails from the script study guide.
-#This one gets setup and run on servera.
-
 ########################################################
 #  Global Variables ####################################
 #  Alter these to suit your personal guide #############
 ########################################################
 
-CHECKHOSTNAME="andys.room.example.com"
+CHECKHOSTNAME="sunny.side.example.com"
 PROGNAME=$0
 SETUPLABEL="/tmp/.setuplabel"
 
 ##### Network Settings #####
 CONNAME="conname"
-ORIGINALCON="ifcfg-eth1"
+ORIGINALCON="Wired\ Connection\ 1"
 
-
+##### VG & LV #####
+EXISTINGVGNAME="Lotso"
+EXISTINGPESIZE="16M"
+EXISTINGLVNAME="Gang"
+EXISTINGLVSIZE="400M"
+EXISTINGFSTYPE="xfs"
+EXISTINGMOUNTPOINT="/VendingMachine"
+EXISTINGFSLOW="550"
+EXISTINGFSHIGH="650"
+VGNAME="Lost"
+PESIZE="8"
+LVNAMEONE="Toys"
+LVSIZEONEMIN="472"
+LVSIZEONEMAX="488"
+LVMMNTONE="/rescuer"
+LVONETYPE="xfs"
+LVNAMETWO="lv2"
+SWAPPART1SIZE="+400"
+LVPART2SIZE="+1G"
+LVPART3SIZE="+512M"
+SWAPBYTELOW="247000"
+SWAPBYTEHIGH="264000"
 
 ##### Users and Groups #####
-ARRAYUSERS=( babyface ducky stinky_pete ) #  may end up changing from array
-NEWPASS="moving"
-ROOTPASS="moving"
-#  If using a special user for facls or etc its details can be set here
-#  along with a UID for the user
-SPECIALUSR="buzz"
-SPCLPWD="moving"
-SPECIALSH="/bin/sh"
-SUUID="2100"
-FINDUSER="Zurg"
-FINDDIR="/root/Emperor"
-FINDFILES="/tmp/ion-blaster,/var/log/evil,/etc/DarthVader.config,/home/galaxy"
-FOUNDFILE1="ion-blaster"
-FOUNDFILE2="evil"
-FOUNDFILE3="DarthVader.config"
-FOUNDFILE4="galaxy"
+NEWPASS="daycare"
+ROOTPASS="daycare"
 
 ##### Timezone #####
 TIMEZONE="America/Los_Angeles"
 TZSERVER="server classroom\.example\.com.*iburst"
 
-##### Yum #####
-YUMREPO1="baseurl.*='http://mirror.centos.org/$contentdir/$releasever/AppStream/$basearch/os'"
-YUMREPO2="baseurl.*='http://mirror.centos.org/$contentdir/$releasever/BaseOS/$basearch/os'"
 
 ##### Files and Directories #####
-HOMEDIRUSER=
-USERDIR=
-NOSHELLUSER=
-COLLABDIR="/sid"
-COLLABGROUP="Cannibals"
-TARFILE="/root/tar.tar.gz"
+TARFILE="/root/libraries.tar.xz"
 ORIGTARDIR="lib"  #for /var/lib This Variable works in the script if directed at the relative path
-RSYNCSRC="/boot"
-RSYNCDEST="/rsync_destination"
-FACLONE="/WoodysRescue"
-FACLTWO="/WoodysRescue"
-FACLUSERONE="babyface"
-FACLUSERTWO="ducky"
+RSYNCSRC="/usr/share/"
+RSYNCDEST="/shared_toys"
 GREPFILESRC="/usr/share/dict/words"
-GREPFILEDEST="/root/roundup"
-VIBECHECK="0"
-
-##### Apache #####
-DOCROOT="/Pizza_planet"
-
-
-##### Firewall #####
-VHOST_PORT="84"
+GREPFILEDEST="/root/Fears"
 
 #  Colored PASS and FAIL for grading
 function print_PASS() {
@@ -82,371 +64,298 @@ function print_FAIL() {
 
 function install_perl() {
     #perl is installed to support password grading functions.
-    yum install perl -y &> /dev/null
+    yum install perl -y
 }
 
-#function grade_networking() {}
-####################httpd section#########
-function grade_httpd() {
-	printf "Checking Apache service and SELINUX. "
-	if ! getenforce | grep -q 'Enforcing'; then
+function grade_rootpw() {
+  for USER in root; do
+    FULLHASH=$(grep "^$USER:" /etc/shadow | cut -d: -f 2)
+    SALT=$(grep "^$USER:" /etc/shadow | cut -d'$' -f3)
+    PERLCOMMAND="print crypt(\"${ROOTPASS}\", \"\\\$6\\\$${SALT}\");"
+    NEWHASH=$(perl -e "${PERLCOMMAND}")
+
+    if [ "${FULLHASH}" != "${NEWHASH}" ]; then
+      print_FAIL
+      echo -e "\033[1;31m - The password for user $USER is not set to ${ROOTPASS}. \033[0;39m"
+      return 1
+    fi
+  done
+  printf "The root password appears to be configured correctly."
+  print_PASS
+  return 0
+}
+function grade_lvresize() {
+  printf "Checking completion of Logical Volume resize. "
+  read LV VG A SIZE A <<< $(lvs --noheadings --units=m ${EXISTINGVGNAME} 2>/dev/null | grep ${EXISTINGLVNAME}) &> /dev/null
+  if [ "${LV}" != "${EXISTINGLVNAME}" ]; then
     print_FAIL
-    echo -e '\033[1;31m - selinux is not set to enforcing\033[0;39m'
+    echo -e "\033[1;31m - No LV named ${EXISTINGLVNAME} found in VG ${EXISTINGVGNAME} we may have destroyed the existing data. \033[0;39m"
     return 1
   fi
-	if ! systemctl status httpd.service &> /dev/null; then
+  SIZE=$(echo ${SIZE} | cut -d. -f1)
+  if  ! (( ${EXISTINGFSLOW} < ${SIZE} && ${SIZE} < ${EXISTINGFSHIGH} )); then
     print_FAIL
-    echo -e '\033[1;31m - httpd.service is not running.\033[0;39m'
+    echo -e "\033[1;31m - Logical Volume ${EXISTINGLVNAME} is not the correct size.\033[0;39m"
     return 1
   fi
-  if ! systemctl status httpd 2> /dev/null | grep -q '^[[:space:]]*Loaded.*enabled'; then
+}
+function grade_vg() {
+  printf "Checking for new VG with correct PE size"
+
+  read VG A A A A SIZE A <<< $(vgs --noheadings --units=m ${VGNAME} 2>/dev/null) &> /dev/null
+  if [ "${VG}" != "$VGNAME" ]; then
     print_FAIL
-    echo -e '\033[1;31m - httpd.service not set to be started at boot.\033[0;39m'
+    echo -e "\033[1;31m - No Volume Group named ${VGNAME} found. \033[0;39m"
     return 1
   fi
-  if ! curl -v --silent localhost:84 2>&1 | grep -q 'eternally'; then
+
+  if ! vgdisplay ${VGNAME} | grep 'PE Size' | grep -q "${PESIZE}"; then
     print_FAIL
-    echo -e '\033[1;31m - You are not serving the correct webpage.\033[0;39m'
+    echo -e "\033[1;31m - Incorrect PE size on volume group $VGNAME. \033[0;39m"
     return 1
   fi
-	printf "The webite is serving the page correctly.  "
-	print_PASS
-	return 0
+    print_PASS
+              return 0
 }
 
-	function grade_hostname() {
-		if ! hostnamectl | grep -q "${CHECKHOSTNAME}"
-    	then
-		echo -e '\033[1;31m - The static hostname is not configured correctly \033[0;39m'
-		print_FAIL
-		return 1
-	fi
-
-	printf "The static hostname has been set correctly "
-	print_PASS
-	return 0
-}
-
-	function grade_firewalld() {
-	printf "Checking firewall configuration on servera. "
-  firewall-cmd --list-all | grep ${VHOST_PORT}/tcp &>/dev/null
-  	RESULT=$?
-  if   [ "${RESULT}" -ne 0 ]
-  then
+function grade_lv1() {
+  printf "Checking the Logical Volume Setup."
+  read LV VG A SIZE A <<< $(lvs --noheadings --units=m ${VGNAME} 2>/dev/null | grep ${LVNAMEONE}) &> /dev/null
+  if [ "${LV}" != "${LVNAMEONE}" ]; then
     print_FAIL
-	  echo -e "\033[1;31m - Either no firewall rule for port ${VHOST_PORT} is present, or it is misconfigured. \033[0;39m"
+    echo -e "\033[1;31m - No LV named ${LVNAMEONE} found in VG ${VGNAME} \033[0;39m"
     return 1
   fi
-	  firewall-cmd --zone=public --list-services | grep cockpit &>/dev/null
-	RESULT=$?
-	if   [ "${RESULT}" -ne 0 ]
-then
+  SIZE=$(echo ${SIZE} | cut -d. -f1)
+  if  ! (( ${LVSIZEONEMIN} < ${SIZE} && ${SIZE} < ${LVSIZEONEMAX} )); then
     print_FAIL
-    echo -e "\033[1;31m - Either no firewall rule for cockpit is present, or it is misconfigured. \033[0;39m"
+    echo -e "\033[1;31m - Logical Volume ${LVNAMEONE} is not the correct size.\033[0;39m"
     return 1
-    	echo -e "\033[1;31m - Firewall rule for cockpit is not enabled. \033[0;39m"
   fi
-	print_PASS
-	return 0
-}
-
-	function grade_php() {
-		printf "Checking to see that Inkscape is installed. "
-	  inkscape --version &>/dev/null
-	  RESULT=$?
-          if [ "${RESULT}" -ne 0 ]; then
-                  print_FAIL
-                  echo -e "\033[1;31m - Inkscape was not installed. \033[0;39m"
-                return 1
-          fi
-	  	print_PASS
-	  	return 0
-  }
-
-#function grade_bashscript() {}
-	function grade_users() {
-		printf "Checking for correct user setup. "
-
-	  grep "${GROUPNAME}:x:*" /etc/group &>/dev/null
-	  RESULT=$?
-	  if [ "${RESULT}" -ne 0 ]; then
-	    print_FAIL
-	    echo -e "\033[1;31m - The $GROUPNAME group does not exist.\033[0;39m"
-	    return 1
-	  fi
-
-	  for USER in $SPECIALUSR $ARRAYUSERS; do
-	    grep "$USER:x:.*" /etc/passwd &>/dev/null
-	    RESULT=$?
-	    if [ "${RESULT}" -ne 0 ]; then
-	      print_FAIL
-	      echo -e "\033[1;31m - The user $USER has not been created.\033[0;39m"
-	      return 1
-	    fi
-	  done
-
-	  for USER in ${ARRAYUSERS}; do
-	    grep "${GROUPNAME}:x:.*$USER.*" /etc/group &>/dev/null
-	    RESULT=$?
-	    if [ "${RESULT}" -ne 0 ]; then
-	      print_FAIL
-	      echo -e "\033[1;31m - The user $USER is not in the $GROUPNAME group.\033[0;39m"
-	      return 1
-	    fi
-	  done
-
-#Still need an evaluation for primary group.
-
-	  #if ! primary_group 'BB8:' 'BB8' ||
-	  #! primary_group 'R2D2:' 'R2D2' ||
-	  #! primary_group 'C3PO:' 'C3PO' ||
-	  #! primary_group 'badguys:' 'Vader'; then
-		#return 1
-	  #fi
-
-	  if ! cat /etc/passwd | grep "$SPECIALUSR" | grep -q "$SUUID"; then
-	    print_FAIL
-	    echo -e "\033[1;31m - The user ${SPECIALUSR}s uid is not set to $SUUID \033[0;39m"
-	    return 1
-	  fi
-	  if ! cat /etc/passwd | grep "$SPECIALUSR" | grep -q "$SPECIALSH"; then
-     	     print_FAIL
-      	     echo -e "\033[1;31m - The user ${SPECIALUSR}s shell is not set to ${SPECIALSH} \033[0;39m"
-	     return 1
-	  fi
-	  for USER in ${ARRAYUSERS}; do
-	    FULLHASH=$(grep "^$USER:" /etc/shadow | cut -d: -f 2)
-	    SALT=$(grep "^$USER:" /etc/shadow | cut -d'$' -f3)
-	    PERLCOMMAND="print crypt(\"${NEWPASS}\", \"\\\$6\\\$${SALT}\");"
-	    NEWHASH=$(perl -e "${PERLCOMMAND}")
-
-	    if [ "${FULLHASH}" != "${NEWHASH}" ]; then
-	      print_FAIL
-	      echo -e "\033[1;31m - The password for user $USER is not set to ${NEWPASS}\033[0;39m"
-	      return 1
-	    fi
-	  done
-
-	  for USER in $SPECIALUSR; do
-	    FULLHASH=$(grep "^$USER:" /etc/shadow | cut -d: -f 2)
-	    SALT=$(grep "^$USER:" /etc/shadow | cut -d'$' -f3)
-	    PERLCOMMAND="print crypt(\"${SPCLPWD}\", \"\\\$6\\\$${SALT}\");"
-	    NEWHASH=$(perl -e "${PERLCOMMAND}")
-
-	    if [ "${FULLHASH}" != "${NEWHASH}" ]; then
-	      print_FAIL
-	      echo -e "\033[1;31m - The password for user $USER is not set to ${SPCLPWD} \033[0;39m"
-	      return 1
-	    fi
-	  done
-	print_PASS
-	return 0
-}
-
-
-function grade_repos() {
-	grep -R "$YUMREPO1" /etc/yum.repos.d/ &>/dev/null
-	local result=$?
-
-	if [[ "${result}" -ne 0 ]]; then
-		print_FAIL
-		echo -e '\033[1;31m - Check your BaseOS yum repository again \033[0;39m'
-		return 1
-	fi
-	grep -R $YUMREPO2 /etc/yum.repos.d/ &>/dev/null
-	local result=$?
-
-	if [[ "${result}" -ne 0 ]]; then
-		print_FAIL
-		echo -e '\033[1;31m - Check your AppStream yum repository again \033[0;39m'
-		return 1
-	fi
-	printf "Your repositories have been setup correctly. Both appear to work. "
-        print_PASS
-        return 0
-}
-
-function grade_shared_directory() {
-	if [ $(stat -c %G "$COLLABDIR") == "$COLLABGROUP" ]
-	then
-		if [ $(stat -c %a "$COLLABDIR") -ne 2770 ]
-		then
-			print_FAIL
-			echo -e "\033[1;31m $COLLABDIR does not have correct permissions \033[0;39m"
-			return 1
-		
-		elif [ $(stat -c %a "$COLLABDIR") -eq 2770 ]
-		then
-			print_PASS
-			echo -e "\033[1;32m $COLLABDIR does have correct permissions \033[0;39m"
-			print_PASS
-			echo -e "Your shared directory has been correctly setup with correct ownership and permissions!"
-		fi
-	else
-		print_FAIL
-		echo  -e "\033[1;31m - $COLLABDIR does not have correct group ownership (${COLLABGROUP})  \033[0;39m"
-		
-	fi
-}
-
-	function grade_fileperms() {
-		printf "Checking permissions and ownership.
-"
-
-	  if ! [ -d ${COLLABDIR} ]; then
-	    print_FAIL
-	    echo -e "\033[1;31m - Directory ${COLLABDIR} not found. \033[0;39m"
-	    return 1
-	  fi
-	  if ! getfacl ${COLLABDIR} 2> /dev/null | grep -q '^# owner: root$' 2> /dev/null; then
-	    print_FAIL
-	    echo -e "\033[1;31m - Ownership of ${COLLABDIR} not set to 'root'. \033[0;39m"
-	    return 1
-	  fi
-	  if ! getfacl ${COLLABDIR} 2> /dev/null | grep -q "^# group: ${COLLABGROUP}$" 2> /dev/null; then
-	    print_FAIL
-	    echo -e "\033[1;31m - Group ownership of ${COLLABDIR} not set to ${COLLABGROUP}\033[0;39m"
-	    return 1
-	  fi
-	  if ! getfacl ${COLLABDIR} 2> /dev/null | grep -q '^user::rwx$' 2> /dev/null; then
-	    print_FAIL
-	    echo -e "\033[1;31m - User permissions not set to 'rwx' on ${COLLABDIR}. \033[0;39m"
-	    return 1
-	  fi
-	  if ! getfacl ${COLLABDIR} 2> /dev/null | grep -q '^group::rwx$' 2> /dev/null; then
-	    print_FAIL
-	    echo -e "\033[1;31m - Group permissions not set to 'rwx' on ${COLLABDIR}. \033[0;39m"
-	    return 1
-	  fi
-	  if ! getfacl ${COLLABDIR} 2> /dev/null | grep -q '^other::---$' 2> /dev/null; then
-	    print_FAIL
-	    echo -e "\033[1;31m - Other permissions not set to no access on ${COLLABDIR}. \033[0;39m"
-	    return 1
-	  fi
-		if ! getfacl ${COLLABDIR} 2> /dev/null | grep -q 'flags: -s-' 2> /dev/null; then
-	    print_FAIL
-	    echo -e "\033[1;31m - Special permissions (SETGID bit) not set on ${COLLABDIR}. \033[0;39m"
-	    return 1
-	  fi
-
-	  printf "Your collabrative directory appears to be setup correctly. "
-	  print_PASS
-	  return 0
-	}
-
-	function grade_findfiles() {
-		  printf "Checking ${FINDDIR} has the correct files.
-"
-
-		  if [ ! -d ${FINDDIR} ]; then
-		    print_FAIL
-		    echo -e "\033[1;31m - The target directory ${FINDDIR} does not exist. \033[0;39m"
-		    return 1
-		  fi
-
-		  if ! ls ${FINDDIR} | grep -q "${FINDUSER}"; then
-		    print_FAIL
-		    echo -e "\033[1;31m - ${FINDUSER}s files were not copied properly. \033[0;39m"
-		    return 1
-		  fi
-
-		  if ! ls ${FINDDIR} | grep -q "${FOUNDFILE1}"; then
-		    print_FAIL
-		    echo -e "\033[1;31m - ${FINDUSER}s files were not copied properly. Did not find ${FOUNDFILE1}. \033[0;39m"
-		    return 1
-		  fi
-
-		  if ! ls ${FINDDIR} | grep -q "${FOUNDFILE2}"; then
-		    print_FAIL
-		    echo -e "\033[1;31m - ${FINDUSER}s files were not copied properly. Did not find ${FOUNDFILE2}. \033[0;39m"
-		    return 1
-		  fi
-
-		  if ! ls ${FINDDIR} | grep -q "${FOUNDFILE3}"; then
-		    print_FAIL
-		    echo -e "\033[1;31m - ${FINDUSER}s files were not copied properly. Did not find ${FOUNDFILE3}. \033[0;39m"
-		    return 1
-		  fi
-
-			if ! ls ${FINDDIR} | grep -q "${FOUNDFILE4}"; then
-		    print_FAIL
-		    echo -e "\033[1;31m - ${FINDUSER}s files were not copied properly. Did not find ${FOUNDFILE4}. \033[0;39m"
-		    return 1
-		  fi
-
-		  printf "The files appear to have been copied successfully"
-		  print_PASS
-		  return 0
-
-	}
-#function grade_grep() {}
-
-	function grade_facl() {
-		if [ ! -f $FACLONE ]
-  then
+  read DEV TYPE MOUNTPOINT <<< $(df --output=source,fstype,target ${LVMMNTONE} 2> /dev/null | grep ${LVMMNTONE} 2> /dev/null) &> /dev/null
+  if [ "${DEV}" != "/dev/mapper/${VGNAME}-${LVNAMEONE}" ]; then
     print_FAIL
-    echo -e "\033[1;31m - File does not exist \033[0;39m"
+    echo -e "\033[1;31m - Wrong device mounted on ${LVMMNTONE}. \033[0;39m"
     return 1
+  fi
+  if [ "${TYPE}" != "${LVONETYPE}" ]; then
+    print_FAIL
+    echo -e "\033[1;31m - Wrong file system type mounted on ${LVMMNTONE}. \033[0;39m"
+    return 1
+  fi
+  if [ "${MOUNTPOINT}" != "${LVMMNTONE}" ]; then
+    print_FAIL
+    echo -e "\033[1;31m - Wrong mountpoint. \033[0;39m"
+    return 1
+  fi
+    print_PASS
+              return 0
+}
+
+function grade_performance() {
+  printf "Checking performance profile. "
+  TUNED=$(tuned-adm active)
+  if [ "${TUNED}" = "Current active profile: desktop" ]; then
+    print_PASS
+    return 0
   else
-  local facl=$(getfacl -p /WoodysRescue | grep user:babyface:rw-)
-  local checkfacl="user:"$FACLUSERONE":rw-"
-  if ! [ "$facl" = "$checkfacl" ]; then
-     print_FAIL
-     echo -e "\033[1;31m - User $FACLUSERONE permission settings on $FACLONE are incorrect. \033[0;39m"
-     return 1
-  fi
-  fi
-
-	if [ ! -f "$FACLTWO" ]
-  then
     print_FAIL
-    echo -e "\033[1;31m - $FACLTWO does not exist. \033[0;39m"
+    echo -e "\033[1;31m - The tuning profile should be set to desktop.\033[0;39m"
     return 1
-  else
-  local facl=$(getfacl -p "$FACLTWO" | grep "^user:"$FACLUSERTWO":---")
-  local checkfacl="user:"$FACLUSERTWO":---"
-  if ! [ "$facl" = "$checkfacl" ]; then
-     print_FAIL
-     echo -e "\033[1;31m - User $FACLUSERTWO permission settings on $FACLTWO are incorrect. \033[0;39m"
-     return 1
-		 if [ ! -f "$FACLTWO" ]
-  then
-    print_FAIL
-    echo -e "\033[1;31m - $FACLTWO does not exist. \033[0;39m"
-    return 1
-  else
-  local facl=$(getfacl -p "$FACLTWO" | "^user:"$FACLUSERTWO":")
-  local checkfacl="user:"$FACLUSERTWO":---"
-  if ! [ "$facl" = "$checkfacl" ]; then
-     print_FAIL
-     echo -e "\033[1;31m - $FACLUSERTWO permission settings on $FACLTWO are incorrect. \033[0;39m"
-     return 1
   fi
-  fi
-  fi
-  fi
-  	printf "The facls appear to have been configured correctly."
-  	print_PASS
-	return 0
-  }
-
-
-  #############################
-  #######calling all functions######
-  function lab_grade() {
-  	install_perl
-    grade_hostname
-  	grade_repos
-  	grade_shared_directory
-  	grade_facl
-  	grade_users
-  	grade_httpd
-  #	grade_tar 
-  	grade_findfiles
-  	grade_fileperms
-  	grade_firewalld
-  	grade_php
 }
 
+function grade_vdo() {
+  printf "Checking that VDO is properly configured. "
+  rpm -qi vdo | grep "package vdo is not installed" &>/dev/null
+              RESULT=$?
+      if [ "${RESULT}" -ne 1 ]; then
+                print_FAIL
+                echo -e "\033[1;31m - VDO does not appear to be installed. \033[0;39m"
+              return 1
+fi
 
-      lab_grade
+systemctl is-enabled vdo.service | grep -q "enabled"
+  RESULT=$?
+      if [ "${RESULT}" -ne 0 ]; then
+                print_FAIL
+                echo -e "\033[1;31m - VDO is not enabled at boot time. \033[0;39m"
+              return 1
+      fi
+vdo list | grep -q VDObox
+  RESULT=$?
+      if [ "${RESULT}" -ne 0 ]; then
+                print_FAIL
+                echo -e "\033[1;31m - VDO volume VDObox unavailable. \033[0;39m"
+              return 1
+      fi
+vdo status --name=VDObox | grep -q "Logical size: 10G"
+  RESULT=$?
+      if [ "${RESULT}" -ne 0 ]; then
+                print_FAIL
+                echo -e "\033[1;31m - VDO volume VDObox doesn't have a logical size of 10G. \033[0;39m"
+              return 1
+      fi
+  print_PASS
+  return 0
+}
+
+function grade_stratis() {
+
+  printf "Checking that Stratis volume exists and is set to be available at boot time. "
+  rpm -qi stratisd | grep "package stratisd is not installed" &>/dev/null
+              RESULT=$?
+      if [ "${RESULT}" -ne 1 ]; then
+                print_FAIL
+                echo -e "\033[1;31m - stratisd does not appear to be installed. \033[0;39m"
+              return 1
+      fi
+  rpm -qi stratis-cli | grep "package stratis-cli is not installed" &>/dev/null
+              RESULT=$?
+      if [ "${RESULT}" -ne 1 ]; then
+                print_FAIL
+                echo -e "\033[1;31m - stratis-cli does not appear to be installed. \033[0;39m"
+              return 1
+      fi
+systemctl is-enabled stratisd | grep -q "enabled"
+              RESULT=$?
+      if [ "${RESULT}" -ne 0 ]; then
+                print_FAIL
+                echo -e "\033[1;31m - stratisd service is not enabled at boot time. \033[0;39m"
+              return 1
+      fi
+
+grep -q x-systemd.requires=stratisd.service /etc/fstab
+  RESULT=$?
+      if [ "${RESULT}" -ne 0 ]; then
+                print_FAIL
+                echo -e "\033[1;31m - Stratis volume missing x-systemd.requires=stratisd.service option in /etc/fstab. \033[0;39m"
+              return 1
+      fi
+stratis pool list | grep -q Landfill
+RESULT=$?
+      if [ "${RESULT}" -ne 0 ]; then
+                print_FAIL
+                echo -e "\033[1;31m - Stratis pool Landfill does not exist. \033[0;39m"
+              return 1
+      fi
+stratis filesystem | grep -q Incinerator
+RESULT=$?
+      if [ "${RESULT}" -ne 0 ]; then
+                print_FAIL
+                echo -e "\033[1;31m - Stratis filesystem called Incinerator was not found. \033[0;39m"
+              return 1
+      fi
+  print_PASS
+
+}
+
+function grade_swap() {
+  printf "Checking for new swap partition. "
+
+  NUMSWAPS=$(swapon -s | wc -l)
+  if [ ${NUMSWAPS} -lt 4 ]; then
+    print_FAIL
+    echo -e "\033[1;31m - You don't have swap configured properly. \033[0;39m"
+    return 1
+  fi
+  if [ ${NUMSWAPS} -gt 4 ]; then
+    print_FAIL
+    echo -e "\033[1;31m - More than 2 swap partitions  found. \033[0;39m"
+    return 1
+  fi
+
+  read PART TYPE SIZE USED PRIO <<< $(swapon -s | grep -v /dev/sdb3 2>/dev/null | tail -n1 2>/dev/null) 2>/dev/null
+  if [ "${TYPE}" != "partition" ]; then
+    print_FAIL
+    echo -e "\033[1;31m - Swap is not a partition. \033[0;39m"
+  fi
+  if  ! (( ${SWAPBYTELOW} < ${SIZE} && ${SIZE} < ${SWAPBYTEHIGH} )); then
+    print_FAIL
+    echo -e "\033[1;31m - Swap is not the correct size. \033[0;39m"
+    return 1
+  fi
+
+  if ! grep -q 'UUID.*swap' /etc/fstab; then
+    print_FAIL
+    echo -e "\033[1;31m - Swap isn't mounted from /etc/fstab by UUID. \033[0;39m"
+    return 1
+  fi
+
+  print_PASS
+  return 0
+}
+function grade_nfs() {
+  printf "Checking automounted home directories. "
+  TESTUSER=forky
+  TESTHOME=/bonnies_trash/${TESTUSER}
+  DATA="$(su - ${TESTUSER} -c pwd 2>/dev/null)"
+  if [ "${DATA}" != "${TESTHOME}" ]; then
+    print_FAIL
+    echo -e "\033[1;31m - Home directory not available for ${TESTUSER}. \033[0;39m"
+    return 1
+  fi
+  if ! mount | grep 'home-directories' | grep -q nfs; then
+    print_FAIL
+    echo -e "\033[1;31m - ${TESTHOME} not mounted over NFS. \033[0;39m"
+    return 1
+  fi
+      print_PASS
+  return 0
+}
+
+function grade_tar() {
+  printf "Checking for correct compressed archive. "
+
+  if [ ! -f $TARFILE ]; then
+    print_FAIL
+    echo -e "\033[1;31m - The $TARFILE archive does not exist. \033[0;39m"
+    return 1
+  fi
+
+  (tar tf $TARFILE | grep "$ORIGTARDIR") &>/dev/null
+  RESULT=$?
+  if [ "${RESULT}" -ne 0 ]; then
+    print_FAIL
+    echo -e "\033[1;31m - The archive content is not correct. \033[0;39m"
+    return 1
+  fi
+  print_PASS
+  return 0
+}
+
+function grade_rsync {
+  printf "Checking for correct rsync backup. "
+
+  if [ ! -d $RSYNCDEST ]; then
+    print_FAIL
+    echo -e "\033[1;31m - The target directory $RSYNCDEST does not exist. \033[0;39m"
+    return 1
+  fi
+
+  rsync -avn $RSYNCSRC $RSYNCDEST &>/dev/null
+  RESULT=$?
+  if [ "${RESULT}" -ne 0 ]; then
+    print_FAIL
+    echo -e "\033[1;31m - Directory was not rsynced properly. \033[0;39m"
+    return 1
+  fi
+  print_PASS
+  return 0
+}
+
+function lab_grade() {
+	install_perl
+ 	grade_rsync
+	grade_rootpw
+	grade_tar
+	grade_nfs
+	grade_swap
+	grade_vg
+	grade_lv1
+	grade_lvresize
+	grade_performance
+	grade_vdo
+	grade_stratis 
+}
+lab_grade
