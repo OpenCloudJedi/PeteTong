@@ -1,3 +1,4 @@
+#Toy story script for Server1
 #This is the file for the at home Tails From the Script guide
 #!/bin/bash
 
@@ -42,8 +43,8 @@ TIMEZONE="America/Los_Angeles"
 TZSERVER="server classroom\.example\.com.*iburst"
 
 ##### Yum #####
-YUMREPO1="baseurl.*='http://mirror.centos.org/$contentdir/$releasever/AppStream/basearch/os'"
-YUMREPO2="baseurl.*='http://mirror.centos.org/$contentdir/$releasever/BaseOS/basearch/os'"
+YUMREPO1="baseurl.*='http://mirror.centos.org/$contentdir/$releasever/AppStream/$basearch/os'"
+YUMREPO2="baseurl.*='http://mirror.centos.org/$contentdir/$releasever/BaseOS/$basearch/os'"
 
 ##### Files and Directories #####
 HOMEDIRUSER=
@@ -277,7 +278,7 @@ function grade_shared_directory() {
 		elif [ $(stat -c %a "$COLLABDIR") -eq 2770 ]
 		then
 			print_PASS
-			echo -e "\033[1;31m $COLLABDIR does has correct permissions \033[0;39m"
+			echo -e "\033[1;32m $COLLABDIR does have correct permissions \033[0;39m"
 			print_PASS
 			echo -e "Your shared directory has been correctly setup with correct ownership and permissions!"
 		fi
@@ -381,7 +382,7 @@ function grade_shared_directory() {
 #function grade_grep() {}
 
 	function grade_facl() {
-		if [ ! -f $FACLONE ]
+		if [ ! -d $FACLONE ]
   then
     print_FAIL
     echo -e "\033[1;31m - Directory does not exist \033[0;39m"
@@ -396,7 +397,7 @@ function grade_shared_directory() {
   fi
   fi
 
-	if [ ! -f "$FACLTWO" ]
+	if [ ! -d "$FACLTWO" ]
   then
     print_FAIL
     echo -e "\033[1;31m - $FACLTWO does not exist. \033[0;39m"
@@ -408,7 +409,7 @@ function grade_shared_directory() {
      print_FAIL
      echo -e "\033[1;31m - User $FACLUSERTWO permission settings on $FACLTWO are incorrect. \033[0;39m"
      return 1
-		 if [ ! -f "$FACLTWO" ]
+		 if [ ! -d "$FACLTWO" ]
   then
     print_FAIL
     echo -e "\033[1;31m - $FACLTWO does not exist. \033[0;39m"
