@@ -1,4 +1,4 @@
-#This is the file for the at home Tails From the Script guide
+#Toy story script for Server1
 #!/bin/bash
 
 #This is the grader script for the tails from the script study guide.
@@ -42,8 +42,8 @@ TIMEZONE="America/Los_Angeles"
 TZSERVER="server classroom\.example\.com.*iburst"
 
 ##### Yum #####
-YUMREPO1="baseurl.*='http://mirror.centos.org/$contentdir/$releasever/AppStream/basearch/os'"
-YUMREPO2="baseurl.*='http://mirror.centos.org/$contentdir/$releasever/BaseOS/basearch/os'"
+YUMREPO1="'baseurl=http://mirror.centos.org/$contentdir/$releasever/AppStream/$basearch/os'"
+YUMREPO2="'baseurl=http://mirror.centos.org/$contentdir/$releasever/BaseOS/$basearch/os'"
 
 ##### Files and Directories #####
 HOMEDIRUSER=
@@ -277,7 +277,7 @@ function grade_shared_directory() {
 		elif [ $(stat -c %a "$COLLABDIR") -eq 2770 ]
 		then
 			print_PASS
-			echo -e "\033[1;31m $COLLABDIR does has correct permissions \033[0;39m"
+			echo -e "\033[1;32m $COLLABDIR does have correct permissions \033[0;39m"
 			print_PASS
 			echo -e "Your shared directory has been correctly setup with correct ownership and permissions!"
 		fi
@@ -384,11 +384,11 @@ function grade_shared_directory() {
 		if [ ! -f $FACLONE ]
   then
     print_FAIL
-    echo -e "\033[1;31m - Directory does not exist \033[0;39m"
+    echo -e "\033[1;31m - File does not exist \033[0;39m"
     return 1
   else
-  local facl=$(getfacl -p /WoodysRescue | grep user:babyface:rw-)
-  local checkfacl="user:"$FACLUSERONE":rw-"
+  local facl=$(getfacl -p /WoodysRescue | grep user:babyface:r--)
+  local checkfacl="user:"$FACLUSERONE":r--"
   if ! [ "$facl" = "$checkfacl" ]; then
      print_FAIL
      echo -e "\033[1;31m - User $FACLUSERONE permission settings on $FACLONE are incorrect. \033[0;39m"
