@@ -1,5 +1,4 @@
 #Toy story script for Server1
-#This is the file for the at home Tails From the Script guide
 #!/bin/bash
 
 #This is the grader script for the tails from the script study guide.
