@@ -1,0 +1,23 @@
+#!/bin/bash
+#Create some LVM stuff to play with
+echo 'fdisk -u  /dev/vdb <<EOF' >> /root/part;
+echo 'n' >> /root/part;
+echo 'p' >> /root/part;
+echo '1' >> /root/part;
+echo '' >> /root/part;
+echo '+1024M' >> /root/part;
+echo 't' >> /root/part;
+echo '8e' >> /root/part;
+echo 'w' >> /root/part;
+echo 'EOF' >> /root/part;
+chmod +x /root/part;
+bash /root/part;
+partprobe;
+pvcreate /dev/vdb1;
+vgcreate Blue -s 16m /dev/vdb1;
+lvcreate -n Moon -L 700M /dev/Blue;
+mkfs.xfs /dev/Blue/Moon;
+cp /etc/fstab ~/;
+echo "/dev/Blue/Moon /Once xfs defaults 0 0" >> /etc/fstab;
+mkdir /Once;
+mount -av;
