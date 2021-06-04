@@ -295,7 +295,7 @@ function grade_nfs() {
     echo -e "\033[1;31m - Home directory not available for ${TESTUSER}. \033[0;39m"
     return 1
   fi
-  if ! mount | grep 'home-directories' | grep -q nfs; then
+  if ! mount | grep 'bonnies_trash' | grep -q nfs; then
     print_FAIL
     echo -e "\033[1;31m - ${TESTHOME} not mounted over NFS. \033[0;39m"
     return 1
