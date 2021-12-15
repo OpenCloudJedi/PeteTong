@@ -139,7 +139,7 @@ function grade_hostname {
 function grade_yumrepoAppstream {
   echo "Checking for correct Appstream yum repo setup"
 
-  grep -R 'baseurl.*=.*content\.example.com\/rhel8.0\/x86_64\/dvd\/AppStream' /etc/yum.repos.d/ &>/dev/null
+  grep -R 'baseurl.*=.*download\.rockylinux.org\/pub\/rocky\/8\/BaseOS\/x86_64\/os' /etc/yum.repos.d/ &>/dev/null
   RESULT=$?
   if [ "${RESULT}" -ne 0 ]; then
     print_FAIL
@@ -154,7 +154,7 @@ function grade_yumrepoAppstream {
 function grade_yumrepoBaseOS {
   echo "Checking for correct BaseOS yum repo setup"
 
-  grep -R 'baseurl.*=.*content\.example.com\/rhel8.0\/x86_64\/dvd\/BaseOS' /etc/yum.repos.d/ &>/dev/null
+  grep -R 'baseurl.*=.*download\.rockylinux.org\/pub\/rocky\/8\/BaseOS\/x86_64\/os' /etc/yum.repos.d/ &>/dev/null
   RESULT=$?
   if [ "${RESULT}" -ne 0 ]; then
     print_FAIL
