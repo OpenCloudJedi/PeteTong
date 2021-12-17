@@ -41,3 +41,4 @@ echo "Would you like to add any users or groups to the sudoers file?"
                 exit 0
         fi
                    
+echo "Script run complete"
